@@ -56,13 +56,10 @@ const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 const parseCSV = (csvText: string): SalesRecord[] => {
   const cleanText = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
   const lines = cleanText.split('\n');
-  // ヘッダー行の処理（ダブルクォート削除）
   const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
   
   return lines.slice(1).map(line => {
     if (!line.trim()) return {} as SalesRecord;
-    // カンマ区切りだが、ダブルクォート内のカンマは無視する簡易実装
-    // 今回は数値データメインなので単純splitで対応
     const values = line.split(',');
     const record: any = {};
     headers.forEach((header, index) => {
@@ -112,7 +109,7 @@ export default function CBDashboard() {
     }
   };
 
-  // Google Sheets 同期処理 (最強版)
+  // Google Sheets 同期処理
   const handleSheetSync = async () => {
     if (!sheetInput) return;
     setIsSyncing(true);
@@ -120,22 +117,17 @@ export default function CBDashboard() {
     setErrorMessage('');
     
     try {
-      // ID抽出ロジック
-      // 1. URLからIDを抜き出す (edit URLでもpub URLでも)
       const idMatch = sheetInput.match(/\/d\/([a-zA-Z0-9-_]+)/);
       const cleanId = idMatch ? idMatch[1] : sheetInput;
 
       let csvText = '';
       let usedMethod = '';
 
-      // 試行1: Gviz API (共有リンク経由) -> これが本命
-      // セキュリティ制限下でも「リンクを知っている全員」なら通ることが多い
       try {
         const gvizUrl = `https://docs.google.com/spreadsheets/d/${cleanId}/gviz/tq?tqx=out:csv&sheet=Sheet1`;
         const res = await fetch(gvizUrl);
         if (res.ok) {
            const text = await res.text();
-           // Gvizはログイン画面を返すことがあるのでチェック
            if (!text.includes('<!DOCTYPE html>') && !text.includes('google.com/accounts')) {
              csvText = text;
              usedMethod = 'Shared Link (Gviz)';
@@ -143,10 +135,8 @@ export default function CBDashboard() {
         }
       } catch (e) { console.log('Gviz failed', e); }
 
-      // 試行2: Pub API (Web公開経由) -> バックアップ
       if (!csvText) {
         try {
-          // 2PACX形式の場合はそのまま使う、そうでなければIDから構築
           const pubUrl = sheetInput.includes('/d/e/2PACX') 
             ? sheetInput 
             : `https://docs.google.com/spreadsheets/d/${cleanId}/pub?output=csv`;
@@ -209,7 +199,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.6</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.7</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -219,11 +209,9 @@ export default function CBDashboard() {
           <NavItem id="future" label="未来・アクション" icon={<Target size={20} />} activeTab={activeTab} setActiveTab={setActiveTab} />
         </nav>
 
-        {/* データ連携エリア */}
         <div className="p-4 border-t border-slate-700 bg-slate-800/50">
           <div className="bg-slate-800 rounded-lg p-4 shadow-inner border border-slate-700 space-y-4">
             
-            {/* Google Sheets 連携 */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-indigo-300 font-bold flex items-center gap-1">
@@ -259,7 +247,6 @@ export default function CBDashboard() {
               </div>
             </div>
 
-            {/* ステータス表示 */}
             {fileName && syncStatus === 'success' && (
                <div className="mt-2 p-2 bg-emerald-900/30 border border-emerald-800/50 rounded text-[10px] text-emerald-300 truncate">
                  読込完了: {fileName}
@@ -273,7 +260,6 @@ export default function CBDashboard() {
 
             <div className="border-t border-slate-600 my-2"></div>
 
-            {/* CSVファイルアップロード */}
             <div>
                <p className="text-[10px] text-slate-500 mb-1">
                 ※セキュリティ制限等で連携できない場合
@@ -406,7 +392,7 @@ const OverviewTab = ({ data, budgetAchievement, currentData, secondHalfForecast 
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} tickFormatter={(value) => `${value/1000}k`} />
                 <Tooltip 
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
-                  formatter={(value: number) => `¥${value.toLocaleString()}`}
+                  formatter={(value: any) => `¥${value.toLocaleString()}`}
                 />
                 <Legend iconType="circle" wrapperStyle={{paddingTop: '20px'}} />
                 
