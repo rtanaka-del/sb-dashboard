@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  ComposedChart, AreaChart, Area, PieChart, Pie, Cell, ReferenceLine, Label
+  ComposedChart, AreaChart, Area, PieChart, Pie, Cell, ReferenceLine, Label, LabelList // ← ここに追加しました！
 } from 'recharts';
 import {
   LayoutDashboard, TrendingUp, Activity, Target, ArrowUpRight, ArrowDownRight,
@@ -214,7 +214,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.9</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.10</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -339,27 +339,23 @@ const NavItem = ({ id, label, icon, activeTab, setActiveTab }: any) => (
   </button>
 );
 
-// OverviewTabを大幅に修正
 const OverviewTab = ({ data, budgetAchievement, currentData, secondHalfForecast }: any) => {
-  // 仮のデータ計算（本来はDBから取得すべき）
-  // 売上を100とした場合の仮の比率で計算
+  // 仮のデータ計算
   const salesBudget = currentData.budget;
-  const salesActual = currentData.actual || currentData.forecast; // 実績がなければ予測を使用
+  const salesActual = currentData.actual || currentData.forecast;
 
-  const costBudget = Math.round(salesBudget * 0.4); // 仮: 予算の40%
-  const costActual = Math.round(salesActual * 0.38); // 仮: 実績の38%
+  const costBudget = Math.round(salesBudget * 0.4);
+  const costActual = Math.round(salesActual * 0.38);
 
   const profitBudget = salesBudget - costBudget;
   const profitActual = salesActual - costActual;
 
-  // グラフ用データ
   const comparisonData = [
     { name: '売上', budget: salesBudget, actual: salesActual },
     { name: 'コスト', budget: costBudget, actual: costActual },
     { name: '貢献利益', budget: profitBudget, actual: profitActual },
   ];
 
-  // 表用データ
   const summaryTableData = [
     { name: '売上', budget: salesBudget, actual: salesActual },
     { name: 'コスト', budget: costBudget, actual: costActual },
