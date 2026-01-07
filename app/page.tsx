@@ -7,7 +7,8 @@ import {
 } from 'recharts';
 import {
   LayoutDashboard, TrendingUp, Activity, Target, ArrowUpRight, ArrowDownRight,
-  Users, DollarSign, Briefcase, AlertCircle, Link as LinkIcon, RefreshCw, CheckCircle, FileUp, Info
+  Users, DollarSign, Briefcase, AlertCircle, Link as LinkIcon, RefreshCw, CheckCircle, FileUp, Info,
+  PieChart as PieChartIcon // アイコンの方にあだ名「PieChartIcon」をつけました
 } from 'lucide-react';
 
 // --- 型定義 ---
@@ -199,7 +200,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.7</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.8</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -464,7 +465,8 @@ const SalesAnalysisTab = ({ data }: any) => {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
         <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-          <PieChart size={20} className="text-indigo-600" />
+          {/* ここで修正：PieChartIconを使用 */}
+          <PieChartIcon size={20} className="text-indigo-600" />
           業界別売上構成比
         </h3>
         <div className="h-72 w-full flex">
