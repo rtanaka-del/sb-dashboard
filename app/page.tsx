@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  ComposedChart, AreaChart, Area, PieChart, Pie, Cell, ReferenceLine, Label, LabelList // ← ここに追加しました！
+  ComposedChart, AreaChart, Area, PieChart, Pie, Cell, ReferenceLine, Label, LabelList
 } from 'recharts';
 import {
   LayoutDashboard, TrendingUp, Activity, Target, ArrowUpRight, ArrowDownRight,
@@ -53,7 +53,7 @@ const FUNNEL_DATA = [
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
-// --- ヘルパー関数: 柔軟なCSVパース ---
+// --- ヘルパー関数 ---
 const parseCSV = (csvText: string): SalesRecord[] => {
   const cleanText = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
   const lines = cleanText.split('\n');
@@ -75,7 +75,6 @@ const parseCSV = (csvText: string): SalesRecord[] => {
   }).filter(r => r.month);
 };
 
-// 数値フォーマット用ヘルパー
 const formatCurrency = (value: number | null | undefined) => {
   if (value === null || value === undefined) return '-';
   return `¥${value.toLocaleString()}`;
@@ -83,9 +82,8 @@ const formatCurrency = (value: number | null | undefined) => {
 
 const formatPercent = (value: number | null | undefined) => {
   if (value === null || value === undefined) return '-';
-  return `${value.toFixed(2)}%`;
+  return `${value.toFixed(1)}%`;
 };
-
 
 export default function CBDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -96,7 +94,6 @@ export default function CBDashboard() {
   const [errorMessage, setErrorMessage] = useState('');
   const [fileName, setFileName] = useState('');
 
-  // CSVファイルアップロード処理
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -122,7 +119,6 @@ export default function CBDashboard() {
     }
   };
 
-  // Google Sheets 同期処理
   const handleSheetSync = async () => {
     if (!sheetInput) return;
     setIsSyncing(true);
@@ -153,7 +149,6 @@ export default function CBDashboard() {
           const pubUrl = sheetInput.includes('/d/e/2PACX') 
             ? sheetInput 
             : `https://docs.google.com/spreadsheets/d/${cleanId}/pub?output=csv`;
-            
           const res = await fetch(pubUrl);
           if (res.ok) {
             const text = await res.text();
@@ -165,14 +160,10 @@ export default function CBDashboard() {
         } catch (e) { console.log('Pub failed', e); }
       }
 
-      if (!csvText) {
-        throw new Error('アクセスできませんでした。「リンクを知っている全員」に共有設定してください。');
-      }
+      if (!csvText) throw new Error('アクセスできませんでした。「リンクを知っている全員」に共有設定してください。');
 
       const parsedData = parseCSV(csvText);
-      if (parsedData.length === 0 || !parsedData[0].month) {
-        throw new Error('データ形式不正: 1行目は month,budget... にしてください');
-      }
+      if (parsedData.length === 0 || !parsedData[0].month) throw new Error('データ形式不正');
 
       setSalesData(parsedData);
       setSyncStatus('success');
@@ -188,21 +179,24 @@ export default function CBDashboard() {
     }
   };
 
-  // 前月のデータを取得（実績がある最後の月とする）
   const currentMonthData = [...salesData].reverse().find(d => d.actual !== null) || salesData[salesData.length - 1];
   
   const budgetAchievement = currentMonthData.actual 
     ? (currentMonthData.actual / currentMonthData.budget) * 100 
     : 0;
+  const targetAchievement = currentMonthData.actual && currentMonthData.target
+    ? (currentMonthData.actual / currentMonthData.target) * 100
+    : 0;
+    
   const secondHalfForecast = salesData.slice(6, 12).reduce((acc, cur) => acc + cur.forecast, 0);
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview': return <OverviewTab data={salesData} budgetAchievement={budgetAchievement} currentData={currentMonthData} secondHalfForecast={secondHalfForecast} />;
+      case 'overview': return <OverviewTab data={salesData} currentData={currentMonthData} secondHalfForecast={secondHalfForecast} />;
       case 'sales': return <SalesAnalysisTab data={salesData} />;
       case 'process': return <ProcessAnalysisTab />;
       case 'future': return <FutureActionTab data={salesData} />;
-      default: return <OverviewTab data={salesData} budgetAchievement={budgetAchievement} currentData={currentMonthData} secondHalfForecast={secondHalfForecast} />;
+      default: return <OverviewTab data={salesData} currentData={currentMonthData} secondHalfForecast={secondHalfForecast} />;
     }
   };
 
@@ -214,7 +208,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.10</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.11</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -226,7 +220,6 @@ export default function CBDashboard() {
 
         <div className="p-4 border-t border-slate-700 bg-slate-800/50">
           <div className="bg-slate-800 rounded-lg p-4 shadow-inner border border-slate-700 space-y-4">
-            
             <div>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-indigo-300 font-bold flex items-center gap-1">
@@ -255,37 +248,25 @@ export default function CBDashboard() {
                   {isSyncing ? 'データを更新' : 'データを更新'}
                 </button>
               </div>
-              
               <div className="mt-2 flex items-start gap-1 text-[10px] text-slate-400">
                 <Info size={12} className="mt-0.5 shrink-0" />
                 <p>「2PACX」ではなく「1OGA...」で始まる標準IDを入力してください。</p>
               </div>
             </div>
-
             {fileName && syncStatus === 'success' && (
-               <div className="mt-2 p-2 bg-emerald-900/30 border border-emerald-800/50 rounded text-[10px] text-emerald-300 truncate">
-                 読込完了: {fileName}
-               </div>
+               <div className="mt-2 p-2 bg-emerald-900/30 border border-emerald-800/50 rounded text-[10px] text-emerald-300 truncate">読込完了: {fileName}</div>
             )}
             {syncStatus === 'error' && (
-              <div className="mt-2 p-2 bg-rose-900/30 border border-rose-800/50 rounded text-[10px] text-rose-300 leading-tight">
-                ⚠ {errorMessage}
-              </div>
+              <div className="mt-2 p-2 bg-rose-900/30 border border-rose-800/50 rounded text-[10px] text-rose-300 leading-tight">⚠ {errorMessage}</div>
             )}
-
             <div className="border-t border-slate-600 my-2"></div>
-
             <div>
-               <p className="text-[10px] text-slate-500 mb-1">
-                ※セキュリティ制限等で連携できない場合
-              </p>
               <label className="flex items-center justify-center w-full px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium rounded cursor-pointer transition-colors border border-slate-600">
                 <FileUp size={12} className="mr-2" />
                 <span>CSVを手動読込</span>
                 <input type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
               </label>
             </div>
-            
           </div>
         </div>
       </aside>
@@ -299,21 +280,13 @@ export default function CBDashboard() {
               {activeTab === 'process' && 'プロセス・要因分析'}
               {activeTab === 'future' && '未来予測とアクションプラン'}
             </h1>
-            <div className="flex items-center gap-2 mt-1">
-               <span className={`w-2 h-2 rounded-full ${syncStatus === 'success' ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
-               <p className="text-xs text-slate-500">
-                  {syncStatus === 'success' ? 'データ同期済み' : '最終更新: 2024年10月01日'}
-               </p>
-            </div>
           </div>
           <div className="flex items-center gap-4">
              <div className="text-right hidden md:block">
                 <p className="text-sm font-medium">山田 太郎</p>
                 <p className="text-xs text-slate-500">法人事業部長</p>
              </div>
-             <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold border border-indigo-100">
-                YT
-             </div>
+             <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold border border-indigo-100">YT</div>
           </div>
         </header>
 
@@ -339,93 +312,121 @@ const NavItem = ({ id, label, icon, activeTab, setActiveTab }: any) => (
   </button>
 );
 
-const OverviewTab = ({ data, budgetAchievement, currentData, secondHalfForecast }: any) => {
-  // 仮のデータ計算
+const KPICard = ({ title, value, subValue, trend, icon, colorClass }: any) => (
+  <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-start justify-between hover:shadow-md transition-shadow group">
+    <div>
+      <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">{title}</p>
+      <h3 className="text-2xl font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{value}</h3>
+      <div className={`flex items-center mt-2 text-sm ${trend === 'up' ? 'text-emerald-600' : trend === 'down' ? 'text-rose-600' : 'text-slate-500'}`}>
+        {trend === 'up' ? <ArrowUpRight size={16} /> : trend === 'down' ? <ArrowDownRight size={16} /> : null}
+        <span className="ml-1 font-medium">{subValue}</span>
+      </div>
+    </div>
+    <div className={`p-3 rounded-lg ${colorClass} bg-opacity-10 text-opacity-100`}>
+      {icon}
+    </div>
+  </div>
+);
+
+const OverviewTab = ({ data, currentData, secondHalfForecast }: any) => {
+  // 数値計算 (予算・目標・実績)
   const salesBudget = currentData.budget;
+  const salesTarget = currentData.target;
   const salesActual = currentData.actual || currentData.forecast;
 
+  // コスト計算 (仮定: 予算比40%程度で推移)
   const costBudget = Math.round(salesBudget * 0.4);
+  const costTarget = Math.round(salesTarget * 0.4); 
   const costActual = Math.round(salesActual * 0.38);
 
+  // 利益計算
   const profitBudget = salesBudget - costBudget;
+  const profitTarget = salesTarget - costTarget;
   const profitActual = salesActual - costActual;
 
+  // グラフ用データ (3本立て)
   const comparisonData = [
-    { name: '売上', budget: salesBudget, actual: salesActual },
-    { name: 'コスト', budget: costBudget, actual: costActual },
-    { name: '貢献利益', budget: profitBudget, actual: profitActual },
+    { name: '売上', budget: salesBudget, target: salesTarget, actual: salesActual },
+    { name: 'コスト', budget: costBudget, target: costTarget, actual: costActual },
+    { name: '貢献利益', budget: profitBudget, target: profitTarget, actual: profitActual },
   ];
 
+  // 表用データ
   const summaryTableData = [
-    { name: '売上', budget: salesBudget, actual: salesActual },
-    { name: 'コスト', budget: costBudget, actual: costActual },
-    { name: '貢献利益', budget: profitBudget, actual: profitActual },
+    { name: '売上', budget: salesBudget, target: salesTarget, actual: salesActual },
+    { name: 'コスト', budget: costBudget, target: costTarget, actual: costActual },
+    { name: '貢献利益', budget: profitBudget, target: profitTarget, actual: profitActual },
   ];
+
+  // 達成率計算
+  const budgetAchieve = (salesActual / salesBudget) * 100;
+  const targetAchieve = (salesActual / salesTarget) * 100;
+  const halfYearBudget = data.slice(6, 12).reduce((acc: number, cur: any) => acc + cur.budget, 0);
+  const halfYearTarget = data.slice(6, 12).reduce((acc: number, cur: any) => acc + cur.target, 0);
+  const halfYearBudgetAchieve = (secondHalfForecast / halfYearBudget) * 100;
+  const halfYearTargetAchieve = (secondHalfForecast / halfYearTarget) * 100;
 
   return (
     <div className="space-y-8">
-      {/* 1. 予算 vs 実績 比較棒グラフ */}
+      {/* --- Section 1: 棒グラフ (3要素比較) --- */}
       <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
         <div className="flex justify-center mb-6">
-            <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-[#82ca9d] rounded-sm"></div>
-                    <span className="text-sm text-slate-600">予算</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-[#ff8042] rounded-sm"></div>
-                    <span className="text-sm text-slate-600">実績</span>
-                </div>
+            <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2"><div className="w-3 h-3 bg-rose-400 rounded-sm"></div><span className="text-sm text-slate-600 font-bold">予算</span></div>
+                <div className="flex items-center gap-2"><div className="w-3 h-3 bg-amber-400 rounded-sm"></div><span className="text-sm text-slate-600 font-bold">目標</span></div>
+                <div className="flex items-center gap-2"><div className="w-3 h-3 bg-indigo-500 rounded-sm"></div><span className="text-sm text-slate-600 font-bold">実績</span></div>
             </div>
         </div>
         <div className="h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={comparisonData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-            >
+            <BarChart data={comparisonData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis dataKey="name" tick={{fontSize: 14, fontWeight: 'bold', fill: '#334155'}} />
-              <YAxis tickFormatter={(value) => `¥${value.toLocaleString()}`} tick={{fontSize: 12, fill: '#64748b'}} />
-              <Tooltip
-                formatter={(value: any) => formatCurrency(value)}
-                cursor={{ fill: 'transparent' }}
-              />
-              <Bar dataKey="budget" name="予算" fill="#82ca9d" radius={[4, 4, 0, 0]} barSize={60}>
-                 <LabelList dataKey="budget" position="top" formatter={(value: any) => value.toLocaleString()} style={{fontSize: '12px', fill: '#82ca9d', fontWeight: 'bold'}} />
+              <YAxis tickFormatter={(value) => `¥${(value/1000).toLocaleString()}k`} tick={{fontSize: 12, fill: '#64748b'}} />
+              <Tooltip formatter={(value: any) => formatCurrency(value)} cursor={{ fill: 'transparent' }} />
+              <Bar dataKey="budget" name="予算" fill="#fb7185" radius={[4, 4, 0, 0]} barSize={40}>
+                 <LabelList dataKey="budget" position="top" formatter={(value: any) => value.toLocaleString()} style={{fontSize: '11px', fill: '#fb7185', fontWeight: 'bold'}} />
               </Bar>
-              <Bar dataKey="actual" name="実績" fill="#ff8042" radius={[4, 4, 0, 0]} barSize={60}>
-                 <LabelList dataKey="actual" position="top" formatter={(value: any) => value.toLocaleString()} style={{fontSize: '12px', fill: '#ff8042', fontWeight: 'bold'}} />
+              <Bar dataKey="target" name="目標" fill="#fbbf24" radius={[4, 4, 0, 0]} barSize={40}>
+                 <LabelList dataKey="target" position="top" formatter={(value: any) => value.toLocaleString()} style={{fontSize: '11px', fill: '#d97706', fontWeight: 'bold'}} />
+              </Bar>
+              <Bar dataKey="actual" name="実績" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={40}>
+                 <LabelList dataKey="actual" position="top" formatter={(value: any) => value.toLocaleString()} style={{fontSize: '11px', fill: '#6366f1', fontWeight: 'bold'}} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* 2. 前月予実サマリー表 */}
+      {/* --- Section 2: 詳細テーブル (予算・目標・実績・達成率x2) --- */}
       <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
-        <h2 className="text-2xl font-bold text-slate-800 mb-2 border-b-2 border-slate-800 pb-2 inline-block">
-            前月 ({currentData.month})
+        <h2 className="text-xl font-bold text-slate-800 mb-4 border-l-4 border-indigo-500 pl-3">
+            前月 ({currentData.month}) サマリー詳細
         </h2>
         <div className="overflow-x-auto">
-            <table className="w-full text-right">
+            <table className="w-full text-right min-w-[600px]">
                 <thead>
-                    <tr className="text-slate-600 border-b border-slate-200">
-                        <th className="py-3 px-4 text-left font-normal"></th>
-                        <th className="py-3 px-4 text-xl font-normal">予算</th>
-                        <th className="py-3 px-4 text-xl font-normal">実績</th>
-                        <th className="py-3 px-4 text-xl font-normal">達成率</th>
+                    <tr className="text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200 bg-slate-50">
+                        <th className="py-3 px-4 text-left">項目</th>
+                        <th className="py-3 px-4">予算</th>
+                        <th className="py-3 px-4">目標 (Target)</th>
+                        <th className="py-3 px-4 font-bold text-slate-700">実績 (Actual)</th>
+                        <th className="py-3 px-4 text-rose-600">対予算比</th>
+                        <th className="py-3 px-4 text-amber-600">対目標比</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {summaryTableData.map((row, index) => {
-                        const achievement = row.budget ? (row.actual / row.budget) * 100 : 0;
+                    {summaryTableData.map((row) => {
+                        const vsBudget = row.budget ? (row.actual / row.budget) * 100 : 0;
+                        const vsTarget = row.target ? (row.actual / row.target) * 100 : 0;
                         return (
-                            <tr key={row.name} className="text-slate-800 border-b border-slate-100 last:border-none">
-                                <td className="py-4 px-4 text-left text-xl font-normal">{row.name}</td>
-                                <td className="py-4 px-4 text-2xl font-medium tracking-tight">{row.budget.toLocaleString()}</td>
-                                <td className="py-4 px-4 text-2xl font-medium tracking-tight">{row.actual.toLocaleString()}</td>
-                                <td className="py-4 px-4 text-2xl font-medium tracking-tight">{formatPercent(achievement)}</td>
+                            <tr key={row.name} className="text-slate-800 border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                                <td className="py-4 px-4 text-left font-bold">{row.name}</td>
+                                <td className="py-4 px-4">{row.budget.toLocaleString()}</td>
+                                <td className="py-4 px-4">{row.target.toLocaleString()}</td>
+                                <td className="py-4 px-4 font-bold text-lg">{row.actual.toLocaleString()}</td>
+                                <td className="py-4 px-4 font-bold text-rose-600">{formatPercent(vsBudget)}</td>
+                                <td className="py-4 px-4 font-bold text-amber-600">{formatPercent(vsTarget)}</td>
                             </tr>
                         );
                     })}
@@ -434,87 +435,101 @@ const OverviewTab = ({ data, budgetAchievement, currentData, secondHalfForecast 
         </div>
       </div>
 
-      {/* 既存のグラフ等は一旦下部に残す（不要であれば削除可能です） */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8 opacity-50 pointer-events-none">
-          <div className="lg:col-span-3">
-              <p className="text-center text-sm text-slate-400 mb-4">- 以下、旧コンテンツ -</p>
-          </div>
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <TrendingUp size={20} className="text-indigo-600" />
-              予算・目標 vs 実績・予測
-            </h3>
-            {/* ...既存の凡例... */}
-          </div>
-          <div className="h-80 w-full">
-            {/* ...既存のComposedChart... */}
-             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} tickFormatter={(value) => `${value/1000}k`} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
-                  formatter={(value: any) => `¥${value.toLocaleString()}`}
-                />
-                <Legend iconType="circle" wrapperStyle={{paddingTop: '20px'}} />
-                <ReferenceLine x="11月" stroke="#10b981" strokeDasharray="3 3">
-                    <Label value="v24.11.0 Release" position="top" fill="#10b981" fontSize={10} fontWeight="bold" offset={10} />
-                </ReferenceLine>
-                <Bar dataKey="actual" name="実績" barSize={30} fill="#6366f1" radius={[4, 4, 0, 0]} />
-                <Line type="monotone" dataKey="forecast" name="予測" stroke="#94a3b8" strokeDasharray="5 5" dot={{r: 3}} strokeWidth={2} />
-                <Line type="monotone" dataKey="budget" name="予算" stroke="#fb7185" strokeWidth={3} dot={{r: 4, strokeWidth: 2, fill: '#fff'}} />
-                <Line type="monotone" dataKey="target" name="目標" stroke="#f59e0b" strokeWidth={3} dot={{r: 4, strokeWidth: 2, fill: '#fff'}} />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        {/* ...既存のサマリーカード... */}
-         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
-          <div>
-            <h3 className="text-lg font-bold text-slate-800 mb-4">着地見込サマリー</h3>
-            <div className="space-y-4">
-              <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                <p className="text-xs text-slate-500 mb-1">当月 ({currentData?.month}) 着地見込</p>
-                <div className="flex items-end justify-between">
-                  <span className="text-2xl font-bold text-slate-800">{formatCurrency(currentData?.actual || currentData?.forecast)}</span>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${budgetAchievement >= 100 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                    達成率 {budgetAchievement.toFixed(0)}%
-                  </span>
-                </div>
-              </div>
-              {/* ...他のサマリーカード略... */}
+      {/* --- Section 3: 旧コンテンツ (トレンドグラフ & KPI & サマリー) --- */}
+      <div className="border-t-2 border-dashed border-slate-200 my-8 pt-8">
+         <p className="text-center text-sm text-slate-400 mb-6 font-bold uppercase tracking-widest">Global Trend Analysis</p>
+         
+         <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <KPICard title="今月売上" value={formatCurrency(salesActual)} subValue={`対予算 ${formatPercent(budgetAchieve - 100)}`} trend={budgetAchieve >= 100 ? 'up' : 'down'} icon={<DollarSign size={24} className="text-indigo-600" />} colorClass="bg-indigo-100" />
+                <KPICard title="新規売上" value="¥2,450,000" subValue="前月比 +12.5%" trend="up" icon={<Briefcase size={24} className="text-emerald-600" />} colorClass="bg-emerald-100" />
+                <KPICard title="解約率" value="0.85%" subValue="前月比 +0.05pt" trend="down" icon={<AlertCircle size={24} className="text-rose-600" />} colorClass="bg-rose-100" />
             </div>
-          </div>
-        </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <TrendingUp size={20} className="text-indigo-600" />
+                    予算・目標 vs 実績・予測推移
+                    </h3>
+                </div>
+                <div className="h-80 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
+                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} tickFormatter={(value) => `${value/1000}k`} />
+                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }} formatter={(value: any) => `¥${value.toLocaleString()}`} />
+                        <Legend iconType="circle" wrapperStyle={{paddingTop: '20px'}} />
+                        <ReferenceLine x="11月" stroke="#10b981" strokeDasharray="3 3">
+                            <Label value="Current" position="top" fill="#10b981" fontSize={10} fontWeight="bold" offset={10} />
+                        </ReferenceLine>
+                        <Bar dataKey="actual" name="実績" barSize={30} fill="#6366f1" radius={[4, 4, 0, 0]} />
+                        <Line type="monotone" dataKey="forecast" name="予測" stroke="#94a3b8" strokeDasharray="5 5" dot={{r: 3}} strokeWidth={2} />
+                        <Line type="monotone" dataKey="budget" name="予算" stroke="#fb7185" strokeWidth={3} dot={{r: 4, strokeWidth: 2, fill: '#fff'}} />
+                        <Line type="monotone" dataKey="target" name="目標" stroke="#f59e0b" strokeWidth={3} dot={{r: 4, strokeWidth: 2, fill: '#fff'}} />
+                    </ComposedChart>
+                    </ResponsiveContainer>
+                </div>
+                </div>
+
+                {/* --- 改修されたサマリーカード (予算比・目標比併記) --- */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div>
+                    <h3 className="text-lg font-bold text-slate-800 mb-4">着地見込サマリー</h3>
+                    <div className="space-y-4">
+                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <p className="text-xs text-slate-500 mb-1">当月 ({currentData?.month}) 着地見込</p>
+                        <div className="flex items-end justify-between mb-2">
+                            <span className="text-2xl font-bold text-slate-800">{formatCurrency(salesActual)}</span>
+                        </div>
+                        <div className="flex gap-2 text-[10px]">
+                            <span className={`px-2 py-0.5 rounded-full font-bold ${budgetAchieve >= 100 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                                予算比 {formatPercent(budgetAchieve)}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full font-bold border ${targetAchieve >= 100 ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-white text-slate-500 border-slate-200'}`}>
+                                目標比 {formatPercent(targetAchieve)}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
+                        <p className="text-xs text-amber-800 mb-1 font-bold">半期 (10-3月) 予測合計</p>
+                        <div className="flex items-end justify-between mb-2">
+                            <span className="text-2xl font-bold text-slate-800">¥{(secondHalfForecast / 1000).toFixed(0)}M</span>
+                        </div>
+                         <div className="flex gap-2 text-[10px]">
+                            <span className="px-2 py-0.5 rounded-full bg-white text-slate-600 font-bold border border-slate-200">
+                                予算比 {formatPercent(halfYearBudgetAchieve)}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-800 font-bold border border-amber-300">
+                                目標比 {formatPercent(halfYearTargetAchieve)}
+                            </span>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+         </div>
       </div>
     </div>
   );
 };
 
-// ...SalesAnalysisTab, ProcessAnalysisTab, FutureActionTab は変更なし...
 const SalesAnalysisTab = ({ data }: any) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
         <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-          {/* ここで修正：PieChartIconを使用 */}
           <PieChartIcon size={20} className="text-indigo-600" />
           業界別売上構成比
         </h3>
         <div className="h-72 w-full flex">
           <ResponsiveContainer width="60%" height="100%">
             <PieChart>
-              <Pie
-                data={INDUSTRY_DATA}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-              >
+              <Pie data={INDUSTRY_DATA} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
                 {INDUSTRY_DATA.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
@@ -534,11 +549,7 @@ const SalesAnalysisTab = ({ data }: any) => {
              ))}
           </div>
         </div>
-        <div className="mt-4 p-3 bg-blue-50 text-blue-800 text-xs rounded-lg border border-blue-100">
-            <strong>Analyst Note:</strong> IT・通信業界のシェアが45%と突出。製造業（グローバル展開企業）のニーズが増加傾向。
-        </div>
       </div>
-
       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
         <h3 className="text-lg font-bold text-slate-800 mb-6">プラン別 MRR推移</h3>
         <div className="h-72 w-full">
@@ -563,9 +574,6 @@ const SalesAnalysisTab = ({ data }: any) => {
             </AreaChart>
           </ResponsiveContainer>
         </div>
-        <div className="mt-4 p-3 bg-slate-50 text-slate-600 text-xs rounded-lg">
-          <strong>Insight:</strong> Premiumプランへのアップセルが順調に進捗し、ARPUが12%向上。
-        </div>
       </div>
     </div>
   );
@@ -578,43 +586,12 @@ const ProcessAnalysisTab = () => {
        <div className="flex flex-col md:flex-row items-center justify-around gap-4 mb-8">
           {FUNNEL_DATA.map((stage, index) => (
               <div key={stage.stage} className="relative flex-1 w-full text-center group">
-                  <div 
-                      className="mx-auto flex items-center justify-center text-white font-bold shadow-md transition-transform group-hover:scale-105 rounded-sm"
-                      style={{ 
-                          width: `${100 - (index * 15)}%`, 
-                          height: '50px',
-                          backgroundColor: COLORS[index],
-                          minWidth: '100px'
-                      }}
-                  >
+                  <div className="mx-auto flex items-center justify-center text-white font-bold shadow-md transition-transform group-hover:scale-105 rounded-sm" style={{ width: `${100 - (index * 15)}%`, height: '50px', backgroundColor: COLORS[index], minWidth: '100px' }}>
                       {stage.value}
                   </div>
                   <p className="mt-2 text-sm font-bold text-slate-700">{stage.stage}</p>
-                  {index < FUNNEL_DATA.length - 1 && (
-                      <div className="absolute top-1/2 -right-4 hidden md:block text-slate-400 text-xs bg-slate-100 px-1 rounded border border-slate-200">
-                          {Math.round((FUNNEL_DATA[index+1].value / stage.value) * 100)}%
-                      </div>
-                  )}
               </div>
           ))}
-       </div>
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-           <div className="p-4 bg-rose-50 border border-rose-100 rounded-lg">
-               <h4 className="font-bold text-rose-700 flex items-center gap-2 mb-2 text-sm">
-                   <AlertCircle size={16} /> ボトルネック検知
-               </h4>
-               <p className="text-xs text-rose-800 leading-relaxed">
-                   「提案→受注」の転換率が42.5%と、目標の50%を下回っています。競合他社との価格競争要因を排除するため、ROI訴求資料の強化が必要です。
-               </p>
-           </div>
-           <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
-               <h4 className="font-bold text-indigo-700 flex items-center gap-2 mb-2 text-sm">
-                   <Activity size={16} /> リードソース分析
-               </h4>
-               <p className="text-xs text-indigo-800 leading-relaxed">
-                   Webナーチャリング経由の商談化率が過去最高の35%を記録。ホワイトペーパーの効果が顕著です。
-               </p>
-           </div>
        </div>
     </div>
   );
@@ -631,34 +608,19 @@ const FutureActionTab = ({ data }: any) => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm border border-white/10">
                         <h3 className="font-bold text-indigo-300 mb-2 text-sm">1. エンタープライズ深耕</h3>
-                        <p className="text-xs text-slate-300 leading-relaxed">
-                            製造業大手の導入成功事例を横展開し、従業員数1,000名以上の企業群におけるARPUを15%引き上げる。
-                        </p>
+                        <p className="text-xs text-slate-300 leading-relaxed">製造業大手の導入成功事例を横展開。</p>
                     </div>
                     <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm border border-white/10">
                         <h3 className="font-bold text-emerald-300 mb-2 text-sm">2. チャーンレートの抑制</h3>
-                        <p className="text-xs text-slate-300 leading-relaxed">
-                            オンボーディング完了後3ヶ月目の利用率低下に対し、CSチームによる「学習定着ワークショップ」を無償提供。
-                        </p>
+                        <p className="text-xs text-slate-300 leading-relaxed">学習定着ワークショップを無償提供。</p>
                     </div>
                     <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm border border-white/10">
                         <h3 className="font-bold text-rose-300 mb-2 text-sm">3. 営業リソース最適化</h3>
-                        <p className="text-xs text-slate-300 leading-relaxed">
-                            インサイドセールスの商談獲得基準を見直し、フィールドセールスの「提案→受注」転換率改善に集中。
-                        </p>
+                        <p className="text-xs text-slate-300 leading-relaxed">提案→受注転換率改善に集中。</p>
                     </div>
                 </div>
             </div>
-
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-bold text-slate-800">シナリオ別 売上予測</h3>
-                    <div className="flex gap-2">
-                         <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] rounded-full font-bold">楽観 (+20%)</span>
-                         <span className="px-2 py-0.5 bg-slate-100 text-slate-700 text-[10px] rounded-full font-bold">Base</span>
-                         <span className="px-2 py-0.5 bg-rose-100 text-rose-700 text-[10px] rounded-full font-bold">保守 (-10%)</span>
-                    </div>
-                </div>
                 <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={data.slice(6, 12)} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
@@ -668,8 +630,6 @@ const FutureActionTab = ({ data }: any) => {
                             <Tooltip />
                             <Legend />
                             <Line type="monotone" dataKey="forecast" name="ベースライン" stroke="#6366f1" strokeWidth={3} />
-                            <Line type="monotone" dataKey={(d) => d.forecast * 1.2} name="楽観シナリオ" stroke="#10b981" strokeDasharray="3 3" />
-                            <Line type="monotone" dataKey={(d) => d.forecast * 0.9} name="保守シナリオ" stroke="#f43f5e" strokeDasharray="3 3" />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
