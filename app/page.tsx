@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   ComposedChart, AreaChart, Area, PieChart, Pie, Cell, ReferenceLine, Label, LabelList
@@ -11,7 +11,7 @@ import {
   PieChart as PieChartIcon
 } from 'lucide-react';
 
-// --- 型定義: スプレッドシートの全列に対応 ---
+// --- 型定義 ---
 type SalesRecord = {
   month: string;
   // 売上
@@ -31,7 +31,7 @@ type SalesRecord = {
   profit_forecast: number;
 };
 
-// --- 初期モックデータ (新しい構造に合わせて更新) ---
+// --- 初期モックデータ ---
 const INITIAL_SALES_DATA: SalesRecord[] = [
   { month: '4月', sales_budget: 12000, sales_target: 13000, sales_actual: 12500, sales_forecast: 12500, cost_budget: 4800, cost_target: 5200, cost_actual: 5000, cost_forecast: 5000, profit_budget: 7200, profit_target: 7800, profit_actual: 7500, profit_forecast: 7500 },
   { month: '5月', sales_budget: 13000, sales_target: 14000, sales_actual: 12800, sales_forecast: 12800, cost_budget: 5200, cost_target: 5600, cost_actual: 5120, cost_forecast: 5120, profit_budget: 7800, profit_target: 8400, profit_actual: 7680, profit_forecast: 7680 },
@@ -105,6 +105,16 @@ export default function CBDashboard() {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [fileName, setFileName] = useState('');
+  const [currentDateName, setCurrentDateName] = useState('');
+
+  // クライアントサイドでのみ日付計算を行う（ハイドレーションエラー防止）
+  useEffect(() => {
+    const today = new Date();
+    // 前月を計算 (例: 1月なら monthIndex 0 -> 前月は 11(12月))
+    const prevMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const m = prevMonthDate.getMonth() + 1;
+    setCurrentDateName(`${m}月`);
+  }, []);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -120,7 +130,7 @@ export default function CBDashboard() {
             setSyncStatus('success');
             setTimeout(() => setSyncStatus('idle'), 3000);
           } else {
-            throw new Error('ヘッダー(month, sales_budget...)を確認してください');
+            throw new Error('ヘッダー(month,budget...)を確認してください');
           }
         } catch (err: any) {
           setSyncStatus('error');
@@ -191,7 +201,10 @@ export default function CBDashboard() {
     }
   };
 
-  const currentMonthData = [...salesData].reverse().find(d => d.sales_actual !== null) || salesData[salesData.length - 1];
+  // 自動算出ロジック: 現在の日付の前月データを探す。なければ「実績がある最後の月」にフォールバック
+  const currentMonthData = currentDateName 
+    ? (salesData.find(d => d.month === currentDateName) || [...salesData].reverse().find(d => d.sales_actual !== null) || salesData[salesData.length - 1])
+    : salesData[salesData.length - 1];
   
   const secondHalfForecast = salesData.slice(6, 12).reduce((acc, cur) => acc + cur.sales_forecast, 0);
 
@@ -213,7 +226,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.14</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.15</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -318,7 +331,6 @@ const NavItem = ({ id, label, icon, activeTab, setActiveTab }: any) => (
 );
 
 const OverviewTab = ({ data, currentData, secondHalfForecast }: any) => {
-  // 自動計算ではなく、スプレッドシートから読み込んだ値を使用
   const salesBudget = currentData.sales_budget;
   const salesTarget = currentData.sales_target;
   const salesActual = currentData.sales_actual || currentData.sales_forecast;
