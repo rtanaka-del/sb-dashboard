@@ -28,7 +28,7 @@ type SalesRecord = {
   profit_forecast: number;
 };
 
-// --- 初期モックデータ (1月-12月決算に合わせて順序変更) ---
+// --- 初期モックデータ (1月-12月決算) ---
 const INITIAL_SALES_DATA: SalesRecord[] = [
   { month: '1月', sales_budget: 12000, sales_target: 13000, sales_actual: 12500, sales_forecast: 12500, cost_budget: 4800, cost_target: 5200, cost_actual: 5000, cost_forecast: 5000, profit_budget: 7200, profit_target: 7800, profit_actual: 7500, profit_forecast: 7500 },
   { month: '2月', sales_budget: 13000, sales_target: 14000, sales_actual: 12800, sales_forecast: 12800, cost_budget: 5200, cost_target: 5600, cost_actual: 5120, cost_forecast: 5120, profit_budget: 7800, profit_target: 8400, profit_actual: 7680, profit_forecast: 7680 },
@@ -102,14 +102,11 @@ export default function CBDashboard() {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [fileName, setFileName] = useState('');
-  
-  // 今日の日付に基づいた「当月」の名前 (例: "1月")
   const [currentMonthName, setCurrentMonthName] = useState('');
 
-  // ページ読み込み時に日付計算とデータ同期
   useEffect(() => {
     const today = new Date();
-    // monthIndex: 0=1月, 1=2月...
+    // 1月なら monthIndex=0 -> 1月
     const m = today.getMonth() + 1; 
     setCurrentMonthName(`${m}月`);
     
@@ -203,8 +200,7 @@ export default function CBDashboard() {
     }
   };
 
-  // --- 自動判定ロジック ---
-  // 当月データの取得 (なければ最後のデータ)
+  // 自動判定ロジック
   const currentMonthData = currentMonthName 
     ? (salesData.find(d => d.month === currentMonthName) || salesData[salesData.length - 1])
     : salesData[salesData.length - 1];
@@ -227,7 +223,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.17</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.18</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -332,51 +328,39 @@ const NavItem = ({ id, label, icon, activeTab, setActiveTab }: any) => (
 );
 
 const OverviewTab = ({ data, currentData }: any) => {
-  // 自動算出ロジック: 
-  // 今日が何月かに基づいて、Q1-Q4, 上期/下期を自動判定する
   const today = new Date();
   const currentMonthIdx = today.getMonth(); // 0 = 1月, 11 = 12月
   
-  // 四半期 (Quarter) の判定
-  // Q1: 0,1,2 (1-3月)
-  // Q2: 3,4,5 (4-6月)
-  // Q3: 6,7,8 (7-9月)
-  // Q4: 9,10,11 (10-12月)
+  // Q1-Q4 自動判定 (1-12月決算)
   const quarterIdx = Math.floor(currentMonthIdx / 3);
   const quarterStartIdx = quarterIdx * 3;
   const quarterEndIdx = quarterStartIdx + 3;
   const quarterData = data.slice(quarterStartIdx, quarterEndIdx);
 
-  // 半期 (Half) の判定
-  // 上期: 0-5 (1-6月)
-  // 下期: 6-11 (7-12月)
+  // 上期・下期 自動判定
   const halfIdx = currentMonthIdx < 6 ? 0 : 1;
   const halfStartIdx = halfIdx === 0 ? 0 : 6;
   const halfEndIdx = halfStartIdx + 6;
   const halfData = data.slice(halfStartIdx, halfEndIdx);
 
-  // 数値計算 (四半期)
   const qBudget = quarterData.reduce((acc: number, cur: any) => acc + cur.sales_budget, 0);
   const qTarget = quarterData.reduce((acc: number, cur: any) => acc + cur.sales_target, 0);
   const qForecast = quarterData.reduce((acc: number, cur: any) => acc + cur.sales_forecast, 0);
   const qBudgetAchieve = qBudget ? (qForecast / qBudget) * 100 : 0;
   const qTargetAchieve = qTarget ? (qForecast / qTarget) * 100 : 0;
 
-  // 数値計算 (半期)
   const hBudget = halfData.reduce((acc: number, cur: any) => acc + cur.sales_budget, 0);
   const hTarget = halfData.reduce((acc: number, cur: any) => acc + cur.sales_target, 0);
   const hForecast = halfData.reduce((acc: number, cur: any) => acc + cur.sales_forecast, 0);
   const hBudgetAchieve = hBudget ? (hForecast / hBudget) * 100 : 0;
   const hTargetAchieve = hTarget ? (hForecast / hTarget) * 100 : 0;
 
-  // 数値計算 (当月)
   const salesBudget = currentData.sales_budget;
   const salesTarget = currentData.sales_target;
   const salesActual = currentData.sales_actual || currentData.sales_forecast;
   const budgetAchieve = salesBudget ? (salesActual / salesBudget) * 100 : 0;
   const targetAchieve = salesTarget ? (salesActual / salesTarget) * 100 : 0;
 
-  // グラフ用データ
   const comparisonData = [
     { name: '売上', budget: salesBudget, target: salesTarget, actual: salesActual },
     { name: 'コスト', budget: currentData.cost_budget, target: currentData.cost_target, actual: currentData.cost_actual || currentData.cost_forecast },
@@ -391,7 +375,6 @@ const OverviewTab = ({ data, currentData }: any) => {
 
   return (
     <div className="space-y-8">
-      {/* 1. 棒グラフ */}
       <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
         <div className="flex justify-center mb-6">
             <div className="flex items-center gap-6">
@@ -421,7 +404,6 @@ const OverviewTab = ({ data, currentData }: any) => {
         </div>
       </div>
 
-      {/* 2. 表 */}
       <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
         <h2 className="text-xl font-bold text-slate-800 mb-4 border-l-4 border-indigo-500 pl-3">
             前月 ({currentData.month}) サマリー詳細
@@ -458,7 +440,6 @@ const OverviewTab = ({ data, currentData }: any) => {
         </div>
       </div>
 
-      {/* 3. 旧コンテンツ */}
       <div className="border-t-2 border-dashed border-slate-200 my-8 pt-8">
          <p className="text-center text-sm text-slate-400 mb-6 font-bold uppercase tracking-widest">Global Trend Analysis</p>
          
@@ -496,7 +477,6 @@ const OverviewTab = ({ data, currentData }: any) => {
                     <h3 className="text-lg font-bold text-slate-800 mb-4">着地見込サマリー</h3>
                     <div className="space-y-4">
                       
-                      {/* 1. 当月 */}
                       <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
                           <p className="text-xs text-slate-500 mb-1">当月着地見込</p>
                           <div className="flex items-end justify-between mb-2">
@@ -512,7 +492,6 @@ const OverviewTab = ({ data, currentData }: any) => {
                           </div>
                       </div>
 
-                      {/* 2. 四半期 (自動判定) */}
                       <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-100">
                           <p className="text-xs text-indigo-800 mb-1 font-bold">四半期予測合計</p>
                           <div className="flex items-end justify-between mb-2">
@@ -528,7 +507,6 @@ const OverviewTab = ({ data, currentData }: any) => {
                           </div>
                       </div>
                       
-                      {/* 3. 半期 (自動判定) */}
                       <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
                           <p className="text-xs text-amber-800 mb-1 font-bold">半期予測合計</p>
                           <div className="flex items-end justify-between mb-2">
@@ -617,6 +595,42 @@ const SalesAnalysisTab = ({ data }: any) => {
           <strong>Insight:</strong> Premiumプランへのアップセルが順調に進捗し、ARPUが12%向上。
         </div>
       </div>
+    </div>
+  );
+};
+
+const ProcessAnalysisTab = () => {
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+       <h3 className="text-lg font-bold text-slate-800 mb-6">セールスファネル分析 (当月)</h3>
+       <div className="flex flex-col md:flex-row items-center justify-around gap-4 mb-8">
+          {FUNNEL_DATA.map((stage, index) => (
+              <div key={stage.stage} className="relative flex-1 w-full text-center group">
+                  <div className="mx-auto flex items-center justify-center text-white font-bold shadow-md transition-transform group-hover:scale-105 rounded-sm" style={{ width: `${100 - (index * 15)}%`, height: '50px', backgroundColor: COLORS[index], minWidth: '100px' }}>
+                      {stage.value}
+                  </div>
+                  <p className="mt-2 text-sm font-bold text-slate-700">{stage.stage}</p>
+              </div>
+          ))}
+       </div>
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+           <div className="p-4 bg-rose-50 border border-rose-100 rounded-lg">
+               <h4 className="font-bold text-rose-700 flex items-center gap-2 mb-2 text-sm">
+                   <AlertCircle size={16} /> ボトルネック検知
+               </h4>
+               <p className="text-xs text-rose-800 leading-relaxed">
+                   「提案→受注」の転換率が42.5%と、目標の50%を下回っています。競合他社との価格競争要因を排除するため、ROI訴求資料の強化が必要です。
+               </p>
+           </div>
+           <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
+               <h4 className="font-bold text-indigo-700 flex items-center gap-2 mb-2 text-sm">
+                   <Activity size={16} /> リードソース分析
+               </h4>
+               <p className="text-xs text-indigo-800 leading-relaxed">
+                   Webナーチャリング経由の商談化率が過去最高の35%を記録。ホワイトペーパーの効果が顕著です。
+               </p>
+           </div>
+       </div>
     </div>
   );
 };
