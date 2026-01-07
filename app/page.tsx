@@ -208,7 +208,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.11</p>
+          <p className="text-xs text-slate-400 mt-2">法人事業部 ダッシュボードver.1</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -283,7 +283,7 @@ export default function CBDashboard() {
           </div>
           <div className="flex items-center gap-4">
              <div className="text-right hidden md:block">
-                <p className="text-sm font-medium">山田 太郎</p>
+                <p className="text-sm font-medium">田中 太郎</p>
                 <p className="text-xs text-slate-500">法人事業部長</p>
              </div>
              <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold border border-indigo-100">YT</div>
@@ -440,12 +440,7 @@ const OverviewTab = ({ data, currentData, secondHalfForecast }: any) => {
          <p className="text-center text-sm text-slate-400 mb-6 font-bold uppercase tracking-widest">Global Trend Analysis</p>
          
          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <KPICard title="今月売上" value={formatCurrency(salesActual)} subValue={`対予算 ${formatPercent(budgetAchieve - 100)}`} trend={budgetAchieve >= 100 ? 'up' : 'down'} icon={<DollarSign size={24} className="text-indigo-600" />} colorClass="bg-indigo-100" />
-                <KPICard title="新規売上" value="¥2,450,000" subValue="前月比 +12.5%" trend="up" icon={<Briefcase size={24} className="text-emerald-600" />} colorClass="bg-emerald-100" />
-                <KPICard title="解約率" value="0.85%" subValue="前月比 +0.05pt" trend="down" icon={<AlertCircle size={24} className="text-rose-600" />} colorClass="bg-rose-100" />
-            </div>
-
+            
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                 <div className="flex justify-between items-center mb-6">
