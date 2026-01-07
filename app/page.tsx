@@ -11,29 +11,40 @@ import {
   PieChart as PieChartIcon
 } from 'lucide-react';
 
-// --- 型定義 ---
+// --- 型定義: スプレッドシートの全列に対応 ---
 type SalesRecord = {
   month: string;
-  budget: number;
-  target: number;
-  actual: number | null;
-  forecast: number;
+  // 売上
+  sales_budget: number;
+  sales_target: number;
+  sales_actual: number | null;
+  sales_forecast: number;
+  // コスト
+  cost_budget: number;
+  cost_target: number;
+  cost_actual: number | null;
+  cost_forecast: number;
+  // 利益
+  profit_budget: number;
+  profit_target: number;
+  profit_actual: number | null;
+  profit_forecast: number;
 };
 
-// --- 初期モックデータ ---
+// --- 初期モックデータ (新しい構造に合わせて更新) ---
 const INITIAL_SALES_DATA: SalesRecord[] = [
-  { month: '4月', budget: 12000, target: 13000, actual: 12500, forecast: 12500 },
-  { month: '5月', budget: 13000, target: 14000, actual: 12800, forecast: 12800 },
-  { month: '6月', budget: 14000, target: 15000, actual: 14500, forecast: 14500 },
-  { month: '7月', budget: 15000, target: 16000, actual: 16000, forecast: 16000 },
-  { month: '8月', budget: 16000, target: 17000, actual: 15800, forecast: 15800 },
-  { month: '9月', budget: 17000, target: 18000, actual: 18200, forecast: 18200 },
-  { month: '10月', budget: 18000, target: 19500, actual: null, forecast: 19000 },
-  { month: '11月', budget: 19000, target: 20500, actual: null, forecast: 19500 },
-  { month: '12月', budget: 20000, target: 21500, actual: null, forecast: 21000 },
-  { month: '1月', budget: 21000, target: 22500, actual: null, forecast: 22000 },
-  { month: '2月', budget: 22000, target: 23500, actual: null, forecast: 22500 },
-  { month: '3月', budget: 23000, target: 25000, actual: null, forecast: 24000 },
+  { month: '4月', sales_budget: 12000, sales_target: 13000, sales_actual: 12500, sales_forecast: 12500, cost_budget: 4800, cost_target: 5200, cost_actual: 5000, cost_forecast: 5000, profit_budget: 7200, profit_target: 7800, profit_actual: 7500, profit_forecast: 7500 },
+  { month: '5月', sales_budget: 13000, sales_target: 14000, sales_actual: 12800, sales_forecast: 12800, cost_budget: 5200, cost_target: 5600, cost_actual: 5120, cost_forecast: 5120, profit_budget: 7800, profit_target: 8400, profit_actual: 7680, profit_forecast: 7680 },
+  { month: '6月', sales_budget: 14000, sales_target: 15000, sales_actual: 14500, sales_forecast: 14500, cost_budget: 5600, cost_target: 6000, cost_actual: 5800, cost_forecast: 5800, profit_budget: 8400, profit_target: 9000, profit_actual: 8700, profit_forecast: 8700 },
+  { month: '7月', sales_budget: 15000, sales_target: 16000, sales_actual: 16000, sales_forecast: 16000, cost_budget: 6000, cost_target: 6400, cost_actual: 6400, cost_forecast: 6400, profit_budget: 9000, profit_target: 9600, profit_actual: 9600, profit_forecast: 9600 },
+  { month: '8月', sales_budget: 16000, sales_target: 17000, sales_actual: 15800, sales_forecast: 15800, cost_budget: 6400, cost_target: 6800, cost_actual: 6320, cost_forecast: 6320, profit_budget: 9600, profit_target: 10200, profit_actual: 9480, profit_forecast: 9480 },
+  { month: '9月', sales_budget: 17000, sales_target: 18000, sales_actual: 18200, sales_forecast: 18200, cost_budget: 6800, cost_target: 7200, cost_actual: 6916, cost_forecast: 6916, profit_budget: 10200, profit_target: 10800, profit_actual: 11284, profit_forecast: 11284 },
+  { month: '10月', sales_budget: 18000, sales_target: 19500, sales_actual: null, sales_forecast: 19000, cost_budget: 7200, cost_target: 7800, cost_actual: null, cost_forecast: 7600, profit_budget: 10800, profit_target: 11700, profit_actual: null, profit_forecast: 11400 },
+  { month: '11月', sales_budget: 19000, sales_target: 20500, sales_actual: null, sales_forecast: 19500, cost_budget: 7600, cost_target: 8200, cost_actual: null, cost_forecast: 7800, profit_budget: 11400, profit_target: 12300, profit_actual: null, profit_forecast: 11700 },
+  { month: '12月', sales_budget: 20000, sales_target: 21500, sales_actual: null, sales_forecast: 21000, cost_budget: 8000, cost_target: 8600, cost_actual: null, cost_forecast: 8400, profit_budget: 12000, profit_target: 12900, profit_actual: null, profit_forecast: 12600 },
+  { month: '1月', sales_budget: 21000, sales_target: 22500, sales_actual: null, sales_forecast: 22000, cost_budget: 8400, cost_target: 9000, cost_actual: null, cost_forecast: 8800, profit_budget: 12600, profit_target: 13500, profit_actual: null, profit_forecast: 13200 },
+  { month: '2月', sales_budget: 22000, sales_target: 23500, sales_actual: null, sales_forecast: 22500, cost_budget: 8800, cost_target: 9400, cost_actual: null, cost_forecast: 9000, profit_budget: 13200, profit_target: 14100, profit_actual: null, profit_forecast: 13500 },
+  { month: '3月', sales_budget: 23000, sales_target: 25000, sales_actual: null, sales_forecast: 24000, cost_budget: 9200, cost_target: 10000, cost_actual: null, cost_forecast: 9600, profit_budget: 13800, profit_target: 15000, profit_actual: null, profit_forecast: 14400 },
 ];
 
 const INDUSTRY_DATA = [
@@ -109,7 +120,7 @@ export default function CBDashboard() {
             setSyncStatus('success');
             setTimeout(() => setSyncStatus('idle'), 3000);
           } else {
-            throw new Error('ヘッダー(month,budget...)を確認してください');
+            throw new Error('ヘッダー(month, sales_budget...)を確認してください');
           }
         } catch (err: any) {
           setSyncStatus('error');
@@ -180,9 +191,9 @@ export default function CBDashboard() {
     }
   };
 
-  const currentMonthData = [...salesData].reverse().find(d => d.actual !== null) || salesData[salesData.length - 1];
+  const currentMonthData = [...salesData].reverse().find(d => d.sales_actual !== null) || salesData[salesData.length - 1];
   
-  const secondHalfForecast = salesData.slice(6, 12).reduce((acc, cur) => acc + cur.forecast, 0);
+  const secondHalfForecast = salesData.slice(6, 12).reduce((acc, cur) => acc + cur.sales_forecast, 0);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -202,7 +213,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.13</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.14</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -307,17 +318,18 @@ const NavItem = ({ id, label, icon, activeTab, setActiveTab }: any) => (
 );
 
 const OverviewTab = ({ data, currentData, secondHalfForecast }: any) => {
-  const salesBudget = currentData.budget;
-  const salesTarget = currentData.target;
-  const salesActual = currentData.actual || currentData.forecast;
+  // 自動計算ではなく、スプレッドシートから読み込んだ値を使用
+  const salesBudget = currentData.sales_budget;
+  const salesTarget = currentData.sales_target;
+  const salesActual = currentData.sales_actual || currentData.sales_forecast;
 
-  const costBudget = Math.round(salesBudget * 0.4);
-  const costTarget = Math.round(salesTarget * 0.4); 
-  const costActual = Math.round(salesActual * 0.38);
+  const costBudget = currentData.cost_budget;
+  const costTarget = currentData.cost_target;
+  const costActual = currentData.cost_actual || currentData.cost_forecast;
 
-  const profitBudget = salesBudget - costBudget;
-  const profitTarget = salesTarget - costTarget;
-  const profitActual = salesActual - costActual;
+  const profitBudget = currentData.profit_budget;
+  const profitTarget = currentData.profit_target;
+  const profitActual = currentData.profit_actual || currentData.profit_forecast;
 
   const comparisonData = [
     { name: '売上', budget: salesBudget, target: salesTarget, actual: salesActual },
@@ -336,15 +348,15 @@ const OverviewTab = ({ data, currentData, secondHalfForecast }: any) => {
 
   // Q3計算 (10,11,12月)
   const q3Data = data.slice(6, 9); 
-  const q3Budget = q3Data.reduce((acc: number, cur: any) => acc + cur.budget, 0);
-  const q3Target = q3Data.reduce((acc: number, cur: any) => acc + cur.target, 0);
-  const q3Forecast = q3Data.reduce((acc: number, cur: any) => acc + cur.forecast, 0);
+  const q3Budget = q3Data.reduce((acc: number, cur: any) => acc + cur.sales_budget, 0);
+  const q3Target = q3Data.reduce((acc: number, cur: any) => acc + cur.sales_target, 0);
+  const q3Forecast = q3Data.reduce((acc: number, cur: any) => acc + cur.sales_forecast, 0);
   const q3BudgetAchieve = (q3Forecast / q3Budget) * 100;
   const q3TargetAchieve = (q3Forecast / q3Target) * 100;
 
   // 半期計算 (10-3月)
-  const halfYearBudget = data.slice(6, 12).reduce((acc: number, cur: any) => acc + cur.budget, 0);
-  const halfYearTarget = data.slice(6, 12).reduce((acc: number, cur: any) => acc + cur.target, 0);
+  const halfYearBudget = data.slice(6, 12).reduce((acc: number, cur: any) => acc + cur.sales_budget, 0);
+  const halfYearTarget = data.slice(6, 12).reduce((acc: number, cur: any) => acc + cur.sales_target, 0);
   const halfYearBudgetAchieve = (secondHalfForecast / halfYearBudget) * 100;
   const halfYearTargetAchieve = (secondHalfForecast / halfYearTarget) * 100;
 
@@ -417,7 +429,7 @@ const OverviewTab = ({ data, currentData, secondHalfForecast }: any) => {
         </div>
       </div>
 
-      {/* 3. 旧コンテンツ（KPIカード削除済み） */}
+      {/* 3. 旧コンテンツ */}
       <div className="border-t-2 border-dashed border-slate-200 my-8 pt-8">
          <p className="text-center text-sm text-slate-400 mb-6 font-bold uppercase tracking-widest">Global Trend Analysis</p>
          
@@ -427,7 +439,7 @@ const OverviewTab = ({ data, currentData, secondHalfForecast }: any) => {
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <TrendingUp size={20} className="text-indigo-600" />
-                    予算・目標 vs 実績・予測推移
+                    予算・目標 vs 実績・予測推移 (売上)
                     </h3>
                 </div>
                 <div className="h-80 w-full">
@@ -441,10 +453,10 @@ const OverviewTab = ({ data, currentData, secondHalfForecast }: any) => {
                         <ReferenceLine x="11月" stroke="#10b981" strokeDasharray="3 3">
                             <Label value="Current" position="top" fill="#10b981" fontSize={10} fontWeight="bold" offset={10} />
                         </ReferenceLine>
-                        <Bar dataKey="actual" name="実績" barSize={30} fill="#6366f1" radius={[4, 4, 0, 0]} />
-                        <Line type="monotone" dataKey="forecast" name="予測" stroke="#94a3b8" strokeDasharray="5 5" dot={{r: 3}} strokeWidth={2} />
-                        <Line type="monotone" dataKey="budget" name="予算" stroke="#fb7185" strokeWidth={3} dot={{r: 4, strokeWidth: 2, fill: '#fff'}} />
-                        <Line type="monotone" dataKey="target" name="目標" stroke="#f59e0b" strokeWidth={3} dot={{r: 4, strokeWidth: 2, fill: '#fff'}} />
+                        <Bar dataKey="sales_actual" name="実績" barSize={30} fill="#6366f1" radius={[4, 4, 0, 0]} />
+                        <Line type="monotone" dataKey="sales_forecast" name="予測" stroke="#94a3b8" strokeDasharray="5 5" dot={{r: 3}} strokeWidth={2} />
+                        <Line type="monotone" dataKey="sales_budget" name="予算" stroke="#fb7185" strokeWidth={3} dot={{r: 4, strokeWidth: 2, fill: '#fff'}} />
+                        <Line type="monotone" dataKey="sales_target" name="目標" stroke="#f59e0b" strokeWidth={3} dot={{r: 4, strokeWidth: 2, fill: '#fff'}} />
                     </ComposedChart>
                     </ResponsiveContainer>
                 </div>
@@ -567,8 +579,8 @@ const SalesAnalysisTab = ({ data }: any) => {
               <YAxis tick={{fontSize: 12}} />
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <Tooltip />
-              <Area type="monotone" dataKey="budget" name="Standard" stackId="1" stroke="#6366f1" fillOpacity={1} fill="url(#colorStandard)" />
-              <Area type="monotone" dataKey="actual" name="Premium" stackId="1" stroke="#10b981" fillOpacity={1} fill="url(#colorPremium)" />
+              <Area type="monotone" dataKey="sales_budget" name="Standard" stackId="1" stroke="#6366f1" fillOpacity={1} fill="url(#colorStandard)" />
+              <Area type="monotone" dataKey="sales_actual" name="Premium" stackId="1" stroke="#10b981" fillOpacity={1} fill="url(#colorPremium)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -648,7 +660,7 @@ const FutureActionTab = ({ data }: any) => {
                             <YAxis domain={['auto', 'auto']} tick={{fontSize: 12}} />
                             <Tooltip />
                             <Legend />
-                            <Line type="monotone" dataKey="forecast" name="ベースライン" stroke="#6366f1" strokeWidth={3} />
+                            <Line type="monotone" dataKey="sales_forecast" name="ベースライン" stroke="#6366f1" strokeWidth={3} />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
