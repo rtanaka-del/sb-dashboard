@@ -85,7 +85,7 @@ const formatPercent = (value: number | null | undefined) => {
   return `${value.toFixed(1)}%`;
 };
 
-// --- メインコンポーネント (ここが default export です) ---
+// --- メインコンポーネント ---
 export default function CBDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [salesData, setSalesData] = useState<SalesRecord[]>(INITIAL_SALES_DATA);
@@ -182,10 +182,6 @@ export default function CBDashboard() {
 
   const currentMonthData = [...salesData].reverse().find(d => d.actual !== null) || salesData[salesData.length - 1];
   
-  const budgetAchievement = currentMonthData.actual 
-    ? (currentMonthData.actual / currentMonthData.budget) * 100 
-    : 0;
-    
   const secondHalfForecast = salesData.slice(6, 12).reduce((acc, cur) => acc + cur.forecast, 0);
 
   const renderContent = () => {
@@ -206,7 +202,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.12</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.13</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -308,22 +304,6 @@ const NavItem = ({ id, label, icon, activeTab, setActiveTab }: any) => (
     {icon}
     {label}
   </button>
-);
-
-const KPICard = ({ title, value, subValue, trend, icon, colorClass }: any) => (
-  <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-start justify-between hover:shadow-md transition-shadow group">
-    <div>
-      <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">{title}</p>
-      <h3 className="text-2xl font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{value}</h3>
-      <div className={`flex items-center mt-2 text-sm ${trend === 'up' ? 'text-emerald-600' : trend === 'down' ? 'text-rose-600' : 'text-slate-500'}`}>
-        {trend === 'up' ? <ArrowUpRight size={16} /> : trend === 'down' ? <ArrowDownRight size={16} /> : null}
-        <span className="ml-1 font-medium">{subValue}</span>
-      </div>
-    </div>
-    <div className={`p-3 rounded-lg ${colorClass} bg-opacity-10 text-opacity-100`}>
-      {icon}
-    </div>
-  </div>
 );
 
 const OverviewTab = ({ data, currentData, secondHalfForecast }: any) => {
@@ -437,17 +417,11 @@ const OverviewTab = ({ data, currentData, secondHalfForecast }: any) => {
         </div>
       </div>
 
-      {/* 3. 旧コンテンツ */}
+      {/* 3. 旧コンテンツ（KPIカード削除済み） */}
       <div className="border-t-2 border-dashed border-slate-200 my-8 pt-8">
          <p className="text-center text-sm text-slate-400 mb-6 font-bold uppercase tracking-widest">Global Trend Analysis</p>
          
          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <KPICard title="今月売上" value={formatCurrency(salesActual)} subValue={`対予算 ${formatPercent(budgetAchieve - 100)}`} trend={budgetAchieve >= 100 ? 'up' : 'down'} icon={<DollarSign size={24} className="text-indigo-600" />} colorClass="bg-indigo-100" />
-                <KPICard title="新規売上" value="¥2,450,000" subValue="前月比 +12.5%" trend="up" icon={<Briefcase size={24} className="text-emerald-600" />} colorClass="bg-emerald-100" />
-                <KPICard title="解約率" value="0.85%" subValue="前月比 +0.05pt" trend="down" icon={<AlertCircle size={24} className="text-rose-600" />} colorClass="bg-rose-100" />
-            </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                 <div className="flex justify-between items-center mb-6">
