@@ -358,9 +358,21 @@ const OverviewTab = ({ data, currentData, secondHalfForecast }: any) => {
     { name: '貢献利益', budget: profitBudget, target: profitTarget, actual: profitActual },
   ];
 
-  // 達成率計算
+  // 達成率計算 (当月)
   const budgetAchieve = (salesActual / salesBudget) * 100;
   const targetAchieve = (salesActual / salesTarget) * 100;
+
+  // 達成率計算 (四半期: Q3 = 10月-12月)
+  // データ配列のインデックス: 4月=0 ... 9月=5, 10月=6, 11月=7, 12月=8
+  const q3Data = data.slice(6, 9); 
+  const q3Budget = q3Data.reduce((acc: number, cur: any) => acc + cur.budget, 0);
+  const q3Target = q3Data.reduce((acc: number, cur: any) => acc + cur.target, 0);
+  const q3Forecast = q3Data.reduce((acc: number, cur: any) => acc + cur.forecast, 0);
+  
+  const q3BudgetAchieve = (q3Forecast / q3Budget) * 100;
+  const q3TargetAchieve = (q3Forecast / q3Target) * 100;
+
+  // 達成率計算 (半期: 10月-3月)
   const halfYearBudget = data.slice(6, 12).reduce((acc: number, cur: any) => acc + cur.budget, 0);
   const halfYearTarget = data.slice(6, 12).reduce((acc: number, cur: any) => acc + cur.target, 0);
   const halfYearBudgetAchieve = (secondHalfForecast / halfYearBudget) * 100;
@@ -440,7 +452,12 @@ const OverviewTab = ({ data, currentData, secondHalfForecast }: any) => {
          <p className="text-center text-sm text-slate-400 mb-6 font-bold uppercase tracking-widest">Global Trend Analysis</p>
          
          <div className="space-y-6">
-            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <KPICard title="今月売上" value={formatCurrency(salesActual)} subValue={`対予算 ${formatPercent(budgetAchieve - 100)}`} trend={budgetAchieve >= 100 ? 'up' : 'down'} icon={<DollarSign size={24} className="text-indigo-600" />} colorClass="bg-indigo-100" />
+                <KPICard title="新規売上" value="¥2,450,000" subValue="前月比 +12.5%" trend="up" icon={<Briefcase size={24} className="text-emerald-600" />} colorClass="bg-emerald-100" />
+                <KPICard title="解約率" value="0.85%" subValue="前月比 +0.05pt" trend="down" icon={<AlertCircle size={24} className="text-rose-600" />} colorClass="bg-rose-100" />
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                 <div className="flex justify-between items-center mb-6">
@@ -471,40 +488,60 @@ const OverviewTab = ({ data, currentData, secondHalfForecast }: any) => {
 
                 {/* --- 改修されたサマリーカード (予算比・目標比併記) --- */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                <div>
+                  <div>
                     <h3 className="text-lg font-bold text-slate-800 mb-4">着地見込サマリー</h3>
                     <div className="space-y-4">
-                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                        <p className="text-xs text-slate-500 mb-1">当月 ({currentData?.month}) 着地見込</p>
-                        <div className="flex items-end justify-between mb-2">
-                            <span className="text-2xl font-bold text-slate-800">{formatCurrency(salesActual)}</span>
-                        </div>
-                        <div className="flex gap-2 text-[10px]">
-                            <span className={`px-2 py-0.5 rounded-full font-bold ${budgetAchieve >= 100 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                                予算比 {formatPercent(budgetAchieve)}
-                            </span>
-                            <span className={`px-2 py-0.5 rounded-full font-bold border ${targetAchieve >= 100 ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-white text-slate-500 border-slate-200'}`}>
-                                目標比 {formatPercent(targetAchieve)}
-                            </span>
-                        </div>
+                      
+                      {/* 1. 当月 */}
+                      <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                          <p className="text-xs text-slate-500 mb-1">当月 ({currentData?.month}) 着地見込</p>
+                          <div className="flex items-end justify-between mb-2">
+                              <span className="text-2xl font-bold text-slate-800">{formatCurrency(salesActual)}</span>
+                          </div>
+                          <div className="flex gap-2 text-[10px]">
+                              <span className={`px-2 py-0.5 rounded-full font-bold ${budgetAchieve >= 100 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                                  予算比 {formatPercent(budgetAchieve)}
+                              </span>
+                              <span className={`px-2 py-0.5 rounded-full font-bold border ${targetAchieve >= 100 ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-white text-slate-500 border-slate-200'}`}>
+                                  目標比 {formatPercent(targetAchieve)}
+                              </span>
+                          </div>
+                      </div>
+
+                      {/* 2. 四半期 (Q3) - NEW! */}
+                      <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+                          <p className="text-xs text-indigo-800 mb-1 font-bold">四半期 (Q3) 予測合計</p>
+                          <div className="flex items-end justify-between mb-2">
+                              <span className="text-2xl font-bold text-slate-800">¥{(q3Forecast / 1000).toFixed(1)}M</span>
+                          </div>
+                          <div className="flex gap-2 text-[10px]">
+                              <span className={`px-2 py-0.5 rounded-full font-bold bg-white border ${q3BudgetAchieve >= 100 ? 'text-indigo-700 border-indigo-200' : 'text-rose-700 border-rose-200'}`}>
+                                  予算比 {formatPercent(q3BudgetAchieve)}
+                              </span>
+                              <span className="px-2 py-0.5 rounded-full bg-indigo-200 text-indigo-800 font-bold border border-indigo-300">
+                                  目標比 {formatPercent(q3TargetAchieve)}
+                              </span>
+                          </div>
+                      </div>
+                      
+                      {/* 3. 半期 */}
+                      <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
+                          <p className="text-xs text-amber-800 mb-1 font-bold">半期 (10-3月) 予測合計</p>
+                          <div className="flex items-end justify-between mb-2">
+                              <span className="text-2xl font-bold text-slate-800">¥{(secondHalfForecast / 1000).toFixed(0)}M</span>
+                          </div>
+                          <div className="flex gap-2 text-[10px]">
+                              <span className="px-2 py-0.5 rounded-full bg-white text-slate-600 font-bold border border-slate-200">
+                                  予算比 {formatPercent(halfYearBudgetAchieve)}
+                              </span>
+                              <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-800 font-bold border border-amber-300">
+                                  目標比 {formatPercent(halfYearTargetAchieve)}
+                              </span>
+                          </div>
+                      </div>
+
                     </div>
-                    
-                    <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
-                        <p className="text-xs text-amber-800 mb-1 font-bold">半期 (10-3月) 予測合計</p>
-                        <div className="flex items-end justify-between mb-2">
-                            <span className="text-2xl font-bold text-slate-800">¥{(secondHalfForecast / 1000).toFixed(0)}M</span>
-                        </div>
-                         <div className="flex gap-2 text-[10px]">
-                            <span className="px-2 py-0.5 rounded-full bg-white text-slate-600 font-bold border border-slate-200">
-                                予算比 {formatPercent(halfYearBudgetAchieve)}
-                            </span>
-                            <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-800 font-bold border border-amber-300">
-                                目標比 {formatPercent(halfYearTargetAchieve)}
-                            </span>
-                        </div>
-                    </div>
-                    </div>
-                </div>
+                  </div>
                 </div>
             </div>
          </div>
