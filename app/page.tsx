@@ -100,20 +100,25 @@ const formatPercent = (value: number | null | undefined) => {
 export default function CBDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [salesData, setSalesData] = useState<SalesRecord[]>(INITIAL_SALES_DATA);
-  const [sheetInput, setSheetInput] = useState('');
+  // ★ ここで初期IDを固定します ★
+  const [sheetInput, setSheetInput] = useState('1UijNvely71JDu73oBoBpho9P84fT-yPmNH2QVVstwO4');
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [fileName, setFileName] = useState('');
   const [currentDateName, setCurrentDateName] = useState('');
 
-  // クライアントサイドでのみ日付計算を行う（ハイドレーションエラー防止）
+  // ページ読み込み時に日付計算と同時にデータ同期も実行
   useEffect(() => {
     const today = new Date();
-    // 前月を計算 (例: 1月なら monthIndex 0 -> 前月は 11(12月))
     const prevMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     const m = prevMonthDate.getMonth() + 1;
     setCurrentDateName(`${m}月`);
+    
+    // 初回自動読み込みを実行
+    if (sheetInput) {
+       handleSheetSync();
+    }
   }, []);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -201,7 +206,6 @@ export default function CBDashboard() {
     }
   };
 
-  // 自動算出ロジック: 現在の日付の前月データを探す。なければ「実績がある最後の月」にフォールバック
   const currentMonthData = currentDateName 
     ? (salesData.find(d => d.month === currentDateName) || [...salesData].reverse().find(d => d.sales_actual !== null) || salesData[salesData.length - 1])
     : salesData[salesData.length - 1];
@@ -226,7 +230,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.15</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.16</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -268,7 +272,7 @@ export default function CBDashboard() {
               </div>
               <div className="mt-2 flex items-start gap-1 text-[10px] text-slate-400">
                 <Info size={12} className="mt-0.5 shrink-0" />
-                <p>「2PACX」ではなく「1OGA...」で始まる標準IDを入力してください。</p>
+                <p>現在、IDは自動設定されています。</p>
               </div>
             </div>
             {fileName && syncStatus === 'success' && (
