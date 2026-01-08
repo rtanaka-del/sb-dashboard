@@ -54,7 +54,7 @@ type ExistingSalesRecord = {
 // Main
 const INITIAL_SALES_DATA: SalesRecord[] = [
   { month: '1月', sales_budget: 12000, sales_target: 13000, sales_actual: 12500, sales_forecast: 12500, cost_budget: 4800, cost_target: 5200, cost_actual: 5000, cost_forecast: 5000, profit_budget: 7200, profit_target: 7800, profit_actual: 7500, profit_forecast: 7500 },
-  // ... (省略可能ですが安全のため残します) ...
+  // ... (エラー防止のため初期データはシンプルに保持)
 ];
 
 // New
@@ -69,6 +69,14 @@ const INITIAL_EXISTING_SALES: ExistingSalesRecord[] = [
   { segment: 'Enterprise', sales: 12500, nrr: 115, renewal: 98, id_growth: 110 },
   { segment: 'Mid', sales: 4800, nrr: 102, renewal: 92, id_growth: 105 },
   { segment: 'Small', sales: 1200, nrr: 85, renewal: 80, id_growth: 90 },
+];
+
+// ★ここに追加しました！★
+const FUNNEL_DATA = [
+  { stage: 'リード獲得', value: 1200 },
+  { stage: '商談化', value: 450 },
+  { stage: '提案', value: 200 },
+  { stage: '受注', value: 85 },
 ];
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
@@ -134,7 +142,6 @@ export default function CBDashboard() {
     }
   }, []);
 
-  // CSV手動アップロードは今回はMainのみ対応（簡易化のため）
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -143,7 +150,7 @@ export default function CBDashboard() {
         try {
           const text = e.target?.result as string;
           const parsed = parseCSV(text);
-          setSalesData(parsed);
+          setSalesData(parsed); // 簡易的にMainへ
           setFileName(file.name);
           setSyncStatus('success');
           setTimeout(() => setSyncStatus('idle'), 3000);
@@ -224,7 +231,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.20</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.21</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -524,7 +531,7 @@ const OverviewTab = ({ data, currentData }: any) => {
 const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: NewSalesRecord[], existingSalesData: ExistingSalesRecord[] }) => {
   const [subTab, setSubTab] = useState<'new' | 'existing'>('new');
 
-  // Hardcoded Lists for Demo (Would be in DB in real app)
+  // Hardcoded Lists for Demo
   const dealList = [
     { date: '2024/09/25', client: '株式会社A商事', segment: 'Enterprise', product: 'Premium Plan', amount: 1500, owner: '佐藤' },
     { date: '2024/09/20', client: 'Bテック株式会社', segment: 'Mid', product: 'Standard Plan', amount: 400, owner: '田中' },
@@ -824,6 +831,24 @@ const ProcessAnalysisTab = () => {
                   <p className="mt-2 text-sm font-bold text-slate-700">{stage.stage}</p>
               </div>
           ))}
+       </div>
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+           <div className="p-4 bg-rose-50 border border-rose-100 rounded-lg">
+               <h4 className="font-bold text-rose-700 flex items-center gap-2 mb-2 text-sm">
+                   <AlertCircle size={16} /> ボトルネック検知
+               </h4>
+               <p className="text-xs text-rose-800 leading-relaxed">
+                   「提案→受注」の転換率が42.5%と、目標の50%を下回っています。競合他社との価格競争要因を排除するため、ROI訴求資料の強化が必要です。
+               </p>
+           </div>
+           <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
+               <h4 className="font-bold text-indigo-700 flex items-center gap-2 mb-2 text-sm">
+                   <Activity size={16} /> リードソース分析
+               </h4>
+               <p className="text-xs text-indigo-800 leading-relaxed">
+                   Webナーチャリング経由の商談化率が過去最高の35%を記録。ホワイトペーパーの効果が顕著です。
+               </p>
+           </div>
        </div>
     </div>
   );
