@@ -28,10 +28,13 @@ type SalesRecord = {
   profit_forecast: number;
 };
 
+// 新規売上分析用の型（項目追加）
 type NewSalesRecord = {
   segment: string;
   budget: number;
+  target: number; // 追加
   actual: number;
+  last_year: number; // 追加
   count: number;
   win_rate: number;
   lead_time: number;
@@ -51,15 +54,18 @@ type ExistingSalesRecord = {
 // --- 初期モックデータ ---
 const INITIAL_SALES_DATA: SalesRecord[] = [
   { month: '1月', sales_budget: 12000, sales_target: 13000, sales_actual: 12500, sales_forecast: 12500, cost_budget: 4800, cost_target: 5200, cost_actual: 5000, cost_forecast: 5000, profit_budget: 7200, profit_target: 7800, profit_actual: 7500, profit_forecast: 7500 },
-  // ...データがない場合のフォールバックとして1件だけ定義
 ];
 
 const INITIAL_NEW_SALES: NewSalesRecord[] = [
-  { segment: 'Enterprise', budget: 5000, actual: 4200, count: 5, win_rate: 35, lead_time: 120, unit_price: 840, id_price: 2000, duration: 12 },
+  { segment: 'Enterprise', budget: 5000, target: 5500, actual: 4200, last_year: 3800, count: 5, win_rate: 35, lead_time: 120, unit_price: 840, id_price: 2000, duration: 12 },
+  { segment: 'Mid', budget: 3000, target: 3300, actual: 3500, last_year: 2500, count: 12, win_rate: 45, lead_time: 60, unit_price: 291, id_price: 1500, duration: 12 },
+  { segment: 'Small', budget: 1500, target: 1800, actual: 1800, last_year: 1000, count: 30, win_rate: 60, lead_time: 30, unit_price: 60, id_price: 1200, duration: 12 },
 ];
 
 const INITIAL_EXISTING_SALES: ExistingSalesRecord[] = [
   { segment: 'Enterprise', sales: 12500, nrr: 115, renewal: 98, id_growth: 110 },
+  { segment: 'Mid', sales: 4800, nrr: 102, renewal: 92, id_growth: 105 },
+  { segment: 'Small', sales: 1200, nrr: 85, renewal: 80, id_growth: 90 },
 ];
 
 // ファネルデータ定義
@@ -84,11 +90,8 @@ const parseCSV = (csvText: string): any[] => {
     const values = line.split(',');
     const record: any = {};
     headers.forEach((header, index) => {
-      // カンマ除去と空白除去
       let val = values[index]?.trim().replace(/"/g, '');
-      if (val) val = val.replace(/,/g, ''); // "1,000" -> "1000"
-
-      // 数字変換
+      if (val) val = val.replace(/,/g, '');
       if (val === '' || val === undefined || val === '-') {
         record[header] = null;
       } else if (!isNaN(Number(val))) {
@@ -124,15 +127,14 @@ export default function CBDashboard() {
   const [errorMessage, setErrorMessage] = useState('');
   const [fileName, setFileName] = useState('');
   
-  // 安全な日付管理
   const [currentMonthName, setCurrentMonthName] = useState<string>('');
   const [currentMonthIndex, setCurrentMonthIndex] = useState<number>(0);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true); // クライアントサイドでのみレンダリングを許可
+    setIsClient(true);
     const today = new Date();
-    const mIndex = today.getMonth(); // 0=1月
+    const mIndex = today.getMonth(); 
     const m = mIndex + 1; 
     setCurrentMonthIndex(mIndex);
     setCurrentMonthName(`${m}月`);
@@ -143,6 +145,7 @@ export default function CBDashboard() {
   }, []);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // 簡易実装（Mainのみ）
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -210,7 +213,6 @@ export default function CBDashboard() {
     ? (salesData.find(d => d.month === currentMonthName) || salesData[salesData.length - 1])
     : salesData[salesData.length - 1];
 
-  // クライアントロード前は何も表示しない（ハイドレーションエラー防止）
   if (!isClient) return null;
 
   const renderContent = () => {
@@ -231,7 +233,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.22</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.23</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -327,11 +329,10 @@ const NavItem = ({ id, label, icon, activeTab, setActiveTab }: any) => (
   </button>
 );
 
+// --- OverviewTab (省略せず保持) ---
 const OverviewTab = ({ data, currentData, monthIndex }: any) => {
-  // 安全装置: データがまだ無い場合はローディング表示
   if (!currentData || !data) return <div className="p-4 text-slate-500">Loading data...</div>;
 
-  // Q1-Q4 自動判定 (monthIndexは親から受け取る)
   const quarterIdx = Math.floor(monthIndex / 3);
   const quarterStartIdx = quarterIdx * 3;
   const quarterEndIdx = quarterStartIdx + 3;
@@ -342,7 +343,6 @@ const OverviewTab = ({ data, currentData, monthIndex }: any) => {
   const halfEndIdx = halfStartIdx + 6;
   const halfData = data.slice(halfStartIdx, halfEndIdx);
 
-  // 安全な計算 (数値でない場合は0扱い)
   const safeSum = (arr: any[], key: string) => arr.reduce((acc, cur) => acc + (Number(cur[key]) || 0), 0);
 
   const qBudget = safeSum(quarterData, 'sales_budget');
@@ -540,11 +540,14 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
 
   // Hardcoded Lists
   const dealList = [
-    { date: '2024/09/25', client: '株式会社A商事', segment: 'Enterprise', product: 'Premium Plan', amount: 1500, owner: '佐藤' },
-    { date: '2024/09/20', client: 'Bテック株式会社', segment: 'Mid', product: 'Standard Plan', amount: 400, owner: '田中' },
-    { date: '2024/09/18', client: 'Cソリューションズ', segment: 'Mid', product: 'Standard Plan', amount: 350, owner: '田中' },
-    { date: '2024/09/15', client: 'D物流', segment: 'Small', product: 'Lite Plan', amount: 50, owner: '鈴木' },
-    { date: '2024/09/10', client: 'E不動産', segment: 'Enterprise', product: 'Premium Plan', amount: 1200, owner: '佐藤' },
+    { date: '2024/09/25', client: '株式会社A商事', segment: 'Enterprise', amount: 1500, id_count: 50, duration: '12ヶ月', owner: '佐藤' },
+    { date: '2024/09/20', client: 'Bテック株式会社', segment: 'Mid', amount: 400, id_count: 20, duration: '12ヶ月', owner: '田中' },
+    { date: '2024/09/18', client: 'Cソリューションズ', segment: 'Mid', amount: 350, id_count: 15, duration: '6ヶ月', owner: '田中' },
+    { date: '2024/09/15', client: 'D物流', segment: 'Small', amount: 50, id_count: 5, duration: '1ヶ月', owner: '鈴木' },
+    { date: '2024/09/10', client: 'E不動産', segment: 'Enterprise', amount: 1200, id_count: 40, duration: '12ヶ月', owner: '佐藤' },
+    { date: '2024/09/05', client: 'Fサービス', segment: 'Mid', amount: 600, id_count: 30, duration: '12ヶ月', owner: '田中' },
+    { date: '2024/09/02', client: 'G商会', segment: 'Small', amount: 100, id_count: 10, duration: '12ヶ月', owner: '鈴木' },
+    { date: '2024/08/28', client: 'H工業', segment: 'Enterprise', amount: 2000, id_count: 80, duration: '24ヶ月', owner: '佐藤' },
   ];
 
   const fluctuationList = [
@@ -585,6 +588,18 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
     );
   };
 
+  // 新規売上のグラフ用データ生成
+  const graphData = newSalesData.map(d => ({
+    segment: d.segment,
+    budget: Number(d.budget) || 0,
+    target: Number(d.target) || 0,
+    actual: Number(d.actual) || 0,
+    // 達成率や前年比 (右軸用)
+    budget_achiev: d.budget ? ((Number(d.actual) / Number(d.budget)) * 100).toFixed(1) : 0,
+    target_achiev: d.target ? ((Number(d.actual) / Number(d.target)) * 100).toFixed(1) : 0,
+    yoy: d.last_year ? ((Number(d.actual) / Number(d.last_year)) * 100).toFixed(1) : 0,
+  }));
+
   return (
     <div className="space-y-6">
       <div className="flex space-x-4 border-b border-slate-200 pb-2">
@@ -608,18 +623,44 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
 
       {subTab === 'new' ? (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          
+          {/* 1) Top Section: Graphs */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <Activity size={20} className="text-indigo-600" />
+              セグメント別 予実・達成率
+            </h3>
+            <div className="h-80 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={graphData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="segment" />
+                  <YAxis yAxisId="left" tickFormatter={(val) => `${val/1000}k`} />
+                  <YAxis yAxisId="right" orientation="right" unit="%" domain={[0, 'auto']} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar yAxisId="left" dataKey="budget" name="予算" fill="#94a3b8" barSize={20} />
+                  <Bar yAxisId="left" dataKey="target" name="目標" fill="#fbbf24" barSize={20} />
+                  <Bar yAxisId="left" dataKey="actual" name="実績" fill="#6366f1" barSize={20} />
+                  <Line yAxisId="right" type="monotone" dataKey="budget_achiev" name="予算達成率" stroke="#10b981" strokeWidth={2} />
+                  <Line yAxisId="right" type="monotone" dataKey="target_achiev" name="目標達成率" stroke="#f59e0b" strokeWidth={2} />
+                  <Line yAxisId="right" type="monotone" dataKey="yoy" name="昨年比" stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* 2) Middle Section: Table */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 overflow-x-auto">
             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
               <Building size={20} className="text-indigo-600" />
-              セグメント別 予実・受注分析
+              セグメント別 詳細指標
             </h3>
             <table className="w-full text-right text-sm min-w-[800px]">
               <thead className="bg-slate-50 text-slate-500 uppercase font-medium">
                 <tr>
                   <th className="p-3 text-left">セグメント</th>
-                  <th className="p-3">予算</th>
-                  <th className="p-3">実績</th>
-                  <th className="p-3">達成率</th>
+                  <th className="p-3">金額 (Actual)</th>
                   <th className="p-3 border-l border-slate-200">件数</th>
                   <th className="p-3">受注率</th>
                   <th className="p-3">リードタイム</th>
@@ -629,55 +670,49 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {newSalesData.map((row) => {
-                  const safeBudget = Number(row.budget) || 0;
-                  const safeActual = Number(row.actual) || 0;
-                  const achieve = safeBudget ? (safeActual / safeBudget) * 100 : 0;
-                  return (
-                    <tr key={row.segment} className="hover:bg-slate-50">
-                      <td className="p-3 text-left font-bold">{row.segment}</td>
-                      <td className="p-3">{safeBudget.toLocaleString()}</td>
-                      <td className="p-3 font-bold text-indigo-600">{safeActual.toLocaleString()}</td>
-                      <td className="p-3">{formatPercent(achieve)}</td>
-                      <td className="p-3 border-l border-slate-200">{row.count}件</td>
-                      <td className="p-3">{row.win_rate}%</td>
-                      <td className="p-3">{row.lead_time}日</td>
-                      <td className="p-3">{Number(row.unit_price).toLocaleString()}</td>
-                      <td className="p-3">{Number(row.id_price).toLocaleString()}</td>
-                      <td className="p-3">{row.duration}ヶ月</td>
-                    </tr>
-                  );
-                })}
+                {newSalesData.map((row) => (
+                  <tr key={row.segment} className="hover:bg-slate-50">
+                    <td className="p-3 text-left font-bold">{row.segment}</td>
+                    <td className="p-3 font-bold text-indigo-600">{Number(row.actual).toLocaleString()}</td>
+                    <td className="p-3 border-l border-slate-200">{row.count}件</td>
+                    <td className="p-3">{row.win_rate}%</td>
+                    <td className="p-3">{row.lead_time}日</td>
+                    <td className="p-3">{Number(row.unit_price).toLocaleString()}</td>
+                    <td className="p-3">{Number(row.id_price).toLocaleString()}</td>
+                    <td className="p-3">{row.duration}ヶ月</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
 
+          {/* 3) Bottom Section: Deal List */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
               <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <FileText size={20} className="text-indigo-600" />
-                受注案件詳細 (最新5件)
+                受注案件詳細 (全件)
               </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left text-slate-600">
-                  <thead className="bg-slate-50 text-xs uppercase">
+              <div className="overflow-x-auto max-h-96">
+                <table className="w-full text-sm text-left text-slate-600 sticky top-0">
+                  <thead className="bg-slate-50 text-xs uppercase sticky top-0 z-10">
                     <tr>
-                      <th className="p-3">受注日</th>
                       <th className="p-3">顧客名</th>
                       <th className="p-3">セグメント</th>
-                      <th className="p-3">商品</th>
                       <th className="p-3 text-right">金額</th>
+                      <th className="p-3 text-right">ID数</th>
+                      <th className="p-3">受講期間</th>
                       <th className="p-3">担当</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {dealList.map((d, i) => (
                       <tr key={i} className="hover:bg-slate-50">
-                        <td className="p-3">{d.date}</td>
                         <td className="p-3 font-bold text-slate-800">{d.client}</td>
                         <td className="p-3"><span className="px-2 py-0.5 bg-slate-100 rounded text-xs">{d.segment}</span></td>
-                        <td className="p-3">{d.product}</td>
                         <td className="p-3 text-right font-medium">{d.amount.toLocaleString()}</td>
+                        <td className="p-3 text-right">{d.id_count}</td>
+                        <td className="p-3">{d.duration}</td>
                         <td className="p-3">{d.owner}</td>
                       </tr>
                     ))}
@@ -686,12 +721,13 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
               </div>
             </div>
 
+            {/* 4) Comments */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
               <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <Info size={20} className="text-indigo-600" />
                 新規売上コメント
               </h3>
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 h-64 overflow-y-auto text-sm text-slate-700 leading-relaxed">
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 h-96 overflow-y-auto text-sm text-slate-700 leading-relaxed">
                 <p className="mb-2"><strong>Enterprise:</strong> 製造業向けのアプローチが奏功し、大型案件を2件獲得。リードタイムも短縮傾向。</p>
                 <p className="mb-2"><strong>Mid:</strong> 競合との価格競争が激化しており、受注率が微減。差別化資料の再整備が必要。</p>
                 <p><strong>Small:</strong> インバウンド流入が好調。Web完結型のプランへの誘導がスムーズに進んでいる。</p>
