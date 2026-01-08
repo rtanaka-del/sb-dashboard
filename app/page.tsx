@@ -28,7 +28,6 @@ type SalesRecord = {
   profit_forecast: number;
 };
 
-// 新規売上分析用の型
 type NewSalesRecord = {
   segment: string;
   budget: number;
@@ -51,33 +50,11 @@ type ExistingSalesRecord = {
   id_growth: number;
 };
 
-// --- 初期モックデータ (Main) ---
-// 12ヶ月分のダミーデータを作成して、四半期・半期・年間の計算が正しく見えるようにする
-const generateMockData = (): SalesRecord[] => {
-  const months = ['4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月', '1月', '2月', '3月'];
-  return months.map((month, i) => {
-    const base = 12000 + (i * 500); // 徐々に増えるベース
-    return {
-      month,
-      sales_budget: base,
-      sales_target: base * 1.1,
-      sales_actual: i < 9 ? base * 1.05 + (Math.random() * 1000 - 500) : null, // 12月まで実績ありとする(9番目)
-      sales_forecast: base * 1.05,
-      cost_budget: base * 0.4,
-      cost_target: base * 0.4 * 1.05,
-      cost_actual: i < 9 ? base * 0.4 * 1.02 : null,
-      cost_forecast: base * 0.4 * 1.02,
-      profit_budget: base * 0.6,
-      profit_target: base * 0.6 * 1.15,
-      profit_actual: i < 9 ? base * 0.6 * 1.08 : null,
-      profit_forecast: base * 0.6 * 1.08,
-    };
-  });
-};
+// --- 初期モックデータ ---
+const INITIAL_SALES_DATA: SalesRecord[] = [
+  { month: '1月', sales_budget: 12000, sales_target: 13000, sales_actual: 12500, sales_forecast: 12500, cost_budget: 4800, cost_target: 5200, cost_actual: 5000, cost_forecast: 5000, profit_budget: 7200, profit_target: 7800, profit_actual: 7500, profit_forecast: 7500 },
+];
 
-const INITIAL_SALES_DATA: SalesRecord[] = generateMockData();
-
-// --- 表示確認用ダミーデータ (New) ---
 const MOCK_NEW_SALES_DATA: NewSalesRecord[] = [
   { segment: 'Enterprise', budget: 5000, target: 5500, actual: 4800, last_year: 4000, count: 5, win_rate: 35, lead_time: 120, unit_price: 840, id_price: 2000, duration: 12 },
   { segment: 'Mid', budget: 3000, target: 3300, actual: 3200, last_year: 2800, count: 12, win_rate: 45, lead_time: 60, unit_price: 291, id_price: 1500, duration: 12 },
@@ -85,9 +62,9 @@ const MOCK_NEW_SALES_DATA: NewSalesRecord[] = [
 ];
 
 const INITIAL_EXISTING_SALES: ExistingSalesRecord[] = [
-  { segment: 'Enterprise', sales: 12500, nrr: 115, renewal: 98, id_growth: 110 },
-  { segment: 'Mid', sales: 4800, nrr: 102, renewal: 92, id_growth: 105 },
-  { segment: 'Small', sales: 1200, nrr: 85, renewal: 80, id_growth: 90 },
+  { segment: 'Enterprise', sales: 12134547, nrr: 60.1, renewal: 92.3, id_growth: 63.9 },
+  { segment: 'Mid', sales: 6942000, nrr: 61.3, renewal: 60.0, id_growth: 68.2 },
+  { segment: 'Small', sales: 690000, nrr: 83.6, renewal: 100.0, id_growth: 92.0 },
 ];
 
 // ファネルデータ定義
@@ -98,8 +75,8 @@ const FUNNEL_DATA = [
   { stage: '受注', value: 85 },
 ];
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#82ca9d', '#ffc658', '#8884d8'];
-const PIE_COLORS = { on: '#3b82f6', off: '#e2e8f0' };
+const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const PIE_COLORS = { on: '#10b981', off: '#e2e8f0' }; // 画像に合わせて緑色に統一
 
 // --- ヘルパー関数 ---
 const parseCSV = (csvText: string): any[] => {
@@ -156,7 +133,8 @@ export default function CBDashboard() {
 
   useEffect(() => {
     setIsClient(true);
-    // デモ用に1月を現在とする (インデックス9)
+    const today = new Date();
+    // デモ用: 9月基準
     const mIndex = 9; 
     const months = ['4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月', '1月', '2月', '3月'];
     
@@ -242,7 +220,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.25-rev2</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.26</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -341,24 +319,23 @@ const NavItem = ({ id, label, icon, activeTab, setActiveTab }: any) => (
 const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
   const n = (val: any) => Number(val) || 0;
 
-  // 前月 (実績ベース)
   const prevSalesBudget = n(prevData.sales_budget);
   const prevSalesTarget = n(prevData.sales_target);
   const prevSalesActual = n(prevData.sales_actual) || n(prevData.sales_forecast); 
   const prevCostActual = n(prevData.cost_actual) || n(prevData.cost_forecast);
   const prevProfitActual = n(prevData.profit_actual) || n(prevData.profit_forecast);
 
-  // 当月 (予測ベース)
   const thisSalesBudget = n(thisData.sales_budget);
   const thisSalesTarget = n(thisData.sales_target);
   const thisSalesForecast = n(thisData.sales_forecast); 
+  const thisSalesBudgetDiff = thisSalesBudget ? (thisSalesForecast / thisSalesBudget) * 100 : 0;
+  const thisSalesTargetDiff = thisSalesTarget ? (thisSalesForecast / thisSalesTarget) * 100 : 0;
+
   const thisCostForecast = n(thisData.cost_forecast);
   const thisProfitForecast = n(thisData.profit_forecast);
 
-  // 期間集計用ヘルパー
   const safeSum = (arr: any[], key: string) => arr.reduce((acc, cur) => acc + (Number(cur[key]) || 0), 0);
 
-  // 四半期 (Q1-Q4)
   const quarterIdx = Math.floor(monthIndex / 3);
   const quarterStartIdx = quarterIdx * 3;
   const quarterData = data.slice(quarterStartIdx, quarterStartIdx + 3);
@@ -368,7 +345,6 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
   const qBudgetAchieve = qBudget ? (qForecast / qBudget) * 100 : 0;
   const qTargetAchieve = qTarget ? (qForecast / qTarget) * 100 : 0;
 
-  // 半期 (H1-H2)
   const halfStartIdx = monthIndex < 6 ? 0 : 6;
   const halfData = data.slice(halfStartIdx, halfStartIdx + 6);
   const hBudget = safeSum(halfData, 'sales_budget');
@@ -377,7 +353,6 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
   const hBudgetAchieve = hBudget ? (hForecast / hBudget) * 100 : 0;
   const hTargetAchieve = hTarget ? (hForecast / hTarget) * 100 : 0;
 
-  // 年間
   const yBudget = safeSum(data, 'sales_budget');
   const yTarget = safeSum(data, 'sales_target');
   const yForecast = safeSum(data, 'sales_forecast');
@@ -403,7 +378,6 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
     { name: '貢献利益', budget: n(thisData.profit_budget), target: n(thisData.profit_target), result: thisProfitForecast },
   ];
 
-  // 達成率バッジのコンポーネント
   const AchievementBadge = ({ label, value }: { label: string, value: number }) => {
     const isTarget = label.includes('目標');
     const bgColor = isTarget ? (value >= 100 ? 'bg-amber-100' : 'bg-white') : (value >= 100 ? 'bg-emerald-100' : 'bg-rose-100');
@@ -422,7 +396,7 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
       <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
         <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
             <Activity size={20} className="text-indigo-600" />
-            [前月実績] ({prevData.month})
+            [前月実績]
         </h3>
         <div className="flex justify-center mb-6">
             <div className="flex items-center gap-6">
@@ -600,25 +574,26 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
   );
 };
 
+// --- Sales Analysis Tab ---
 const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: NewSalesRecord[], existingSalesData: ExistingSalesRecord[] }) => {
   const [subTab, setSubTab] = useState<'new' | 'existing'>('new');
 
-  // 前月分のモックデータ
-  const prevMonthDealList = [
-    { date: '2024/12/25', client: '株式会社A商事', segment: 'Enterprise', amount: 1500, id_count: 50, duration: '12ヶ月', owner: '佐藤' },
-    { date: '2024/12/20', client: 'Bテック株式会社', segment: 'Mid', amount: 400, id_count: 20, duration: '12ヶ月', owner: '田中' },
-    { date: '2024/12/18', client: 'Cソリューションズ', segment: 'Mid', amount: 350, id_count: 15, duration: '6ヶ月', owner: '田中' },
-    { date: '2024/12/15', client: 'D物流', segment: 'Small', amount: 50, id_count: 5, duration: '1ヶ月', owner: '鈴木' },
-    { date: '2024/12/10', client: 'E不動産', segment: 'Enterprise', amount: 1200, id_count: 40, duration: '12ヶ月', owner: '佐藤' },
+  // New Sales Lists
+  const dealList = [
+    { date: '2024/09/25', client: '株式会社A商事', segment: 'Enterprise', amount: 1500, id_count: 50, duration: '12ヶ月', owner: '佐藤' },
+    { date: '2024/09/20', client: 'Bテック株式会社', segment: 'Mid', amount: 400, id_count: 20, duration: '12ヶ月', owner: '田中' },
+    { date: '2024/09/18', client: 'Cソリューションズ', segment: 'Mid', amount: 350, id_count: 15, duration: '6ヶ月', owner: '田中' },
+    { date: '2024/09/15', client: 'D物流', segment: 'Small', amount: 50, id_count: 5, duration: '1ヶ月', owner: '鈴木' },
+    { date: '2024/09/10', client: 'E不動産', segment: 'Enterprise', amount: 1200, id_count: 40, duration: '12ヶ月', owner: '佐藤' },
   ];
 
-  // 今月分のモックデータ (新規追加)
   const thisMonthDealList = [
     { date: '2025/01/10', client: 'Fの杜', segment: 'Enterprise', amount: 2200, id_count: 80, duration: '12ヶ月', owner: '佐藤' },
     { date: '2025/01/08', client: 'G建設', segment: 'Mid', amount: 550, id_count: 25, duration: '12ヶ月', owner: '田中' },
     { date: '2025/01/05', client: 'Hデザイン', segment: 'Small', amount: 80, id_count: 8, duration: '12ヶ月', owner: '鈴木' },
   ];
 
+  // Existing Sales Lists
   const fluctuationList = [
     { client: 'Xホールディングス', segment: 'Enterprise', oldAmount: 2000, newAmount: 2500, diff: '+25%', reason: '部署拡大' },
     { client: 'Yシステムズ', segment: 'Mid', oldAmount: 500, newAmount: 0, diff: '-100%', reason: '解約 (予算縮小)' },
@@ -631,35 +606,56 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
   const renewedList = [
     { client: 'アルファ工業', segment: 'Enterprise', amount: 1200, term: '12ヶ月' },
     { client: 'ベータ銀行', segment: 'Enterprise', amount: 3000, term: '12ヶ月' },
+    { client: 'ガンマ商事', segment: 'Mid', amount: 500, term: '12ヶ月' },
+    { client: 'デルタ通運', segment: 'Small', amount: 120, term: '12ヶ月' },
+    { client: 'イプシロンIT', segment: 'Mid', amount: 800, term: '12ヶ月' },
+    { client: 'ゼータ製薬', segment: 'Enterprise', amount: 4500, term: '12ヶ月' },
   ];
 
-  const CircularRate = ({ value, color }: { value: number, color: string }) => {
+  const CircularRate = ({ label, value, color }: { label: string, value: number, color: string }) => {
     const data = [
       { name: 'Val', value: value },
       { name: 'Rest', value: 100 - (value > 100 ? 0 : value) },
     ];
     return (
       <div className="flex flex-col items-center">
-        <div className="w-20 h-20 relative">
+        <div className="w-16 h-16 relative">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={data} innerRadius={25} outerRadius={35} startAngle={90} endAngle={-270} dataKey="value" stroke="none">
+              <Pie data={data} innerRadius={20} outerRadius={28} startAngle={90} endAngle={-270} dataKey="value" stroke="none">
                 <Cell fill={color} />
                 <Cell fill={PIE_COLORS.off} />
               </Pie>
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-700">
-            {value}%
+          <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-700">
+            {value.toFixed(1)}%
           </div>
         </div>
+        <span className="text-[10px] font-bold text-slate-600 mt-1">{label}</span>
       </div>
     );
   };
 
-  const displayData = newSalesData.filter(d => ['Enterprise', 'Mid', 'Small'].includes(d.segment));
+  const SegmentCard = ({ title, data, colorClass }: { title: string, data: any, colorClass: string }) => (
+    <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm flex flex-col h-full bg-white">
+      <div className={`${colorClass} text-white py-2 text-center font-bold text-sm uppercase`}>{title}</div>
+      <div className="p-4 flex flex-col items-center justify-between flex-1">
+        <div className="text-center mb-4">
+          <p className="text-[10px] text-slate-500 font-bold mb-1">今回提供価格(円)</p>
+          <p className="text-2xl font-extrabold text-slate-800">{Number(data.sales).toLocaleString()}</p>
+        </div>
+        <div className="flex justify-between w-full px-1">
+          <CircularRate label="金額継続率" value={Number(data.nrr)} color="#10b981" />
+          <CircularRate label="契約更新率" value={Number(data.renewal)} color="#10b981" />
+          <CircularRate label="ID増減率" value={Number(data.id_growth)} color="#10b981" />
+        </div>
+      </div>
+    </div>
+  );
 
-  // グラフデータ生成 (達成率を削除し、4本の棒グラフ用に整形)
+  // New Sales Data Prep
+  const displayData = newSalesData.filter(d => ['Enterprise', 'Mid', 'Small'].includes(d.segment));
   const graphData = displayData.map(d => ({
     segment: d.segment,
     last_year: Number(d.last_year) || 0,
@@ -667,6 +663,19 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
     target: Number(d.target) || 0,
     actual: Number(d.actual) || 0,
   }));
+
+  // Existing Sales Data Prep
+  const entData = existingSalesData.find(d => d.segment === 'Enterprise') || { sales: 0, nrr: 0, renewal: 0, id_growth: 0 };
+  const midData = existingSalesData.find(d => d.segment === 'Mid') || { sales: 0, nrr: 0, renewal: 0, id_growth: 0 };
+  const smlData = existingSalesData.find(d => d.segment === 'Small') || { sales: 0, nrr: 0, renewal: 0, id_growth: 0 };
+  
+  // Calculate Totals/Avgs
+  const totalSales = existingSalesData.reduce((a, b) => a + Number(b.sales), 0);
+  const avgNrr = existingSalesData.reduce((a, b) => a + Number(b.nrr), 0) / existingSalesData.length;
+  const avgRen = existingSalesData.reduce((a, b) => a + Number(b.renewal), 0) / existingSalesData.length;
+  const avgId = existingSalesData.reduce((a, b) => a + Number(b.id_growth), 0) / existingSalesData.length;
+  
+  const totalData = { sales: totalSales, nrr: avgNrr, renewal: avgRen, id_growth: avgId };
 
   return (
     <div className="space-y-6">
@@ -692,7 +701,6 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
       {subTab === 'new' ? (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           
-          {/* 1) Top Section: Graphs (修正: 4本棒グラフ化) */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
               <Activity size={20} className="text-indigo-600" />
@@ -703,7 +711,7 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
                 <ComposedChart data={graphData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="segment" />
-                  <YAxis tickFormatter={(val) => `${val/1000}k`} />
+                  <YAxis yAxisId="left" tickFormatter={(val) => `${val/1000}k`} />
                   <Tooltip formatter={(value:any) => formatCurrency(value)} />
                   <Legend />
                   <Bar dataKey="last_year" name="昨年実績" fill="#94a3b8" barSize={20} />
@@ -715,7 +723,6 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
             </div>
           </div>
 
-          {/* 2) Middle Section: Table (タイトル修正) */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 overflow-x-auto">
             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
               <Building size={20} className="text-indigo-600" />
@@ -751,9 +758,7 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
             </table>
           </div>
 
-          {/* 3) Bottom Section: Deal Lists & Comments */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* 左カラム: 前月案件リスト */}
             <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
               <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <FileText size={20} className="text-indigo-600" />
@@ -773,7 +778,7 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {prevMonthDealList.map((d, i) => (
+                    {dealList.map((d, i) => (
                       <tr key={i} className="hover:bg-slate-50">
                         <td className="p-3">{d.date}</td>
                         <td className="p-3 font-bold text-slate-800">{d.client}</td>
@@ -789,7 +794,6 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
               </div>
             </div>
 
-            {/* 右カラム: コメント */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
               <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <Info size={20} className="text-indigo-600" />
@@ -803,7 +807,6 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
             </div>
           </div>
 
-          {/* 4) New Section: This Month Deal List (新規追加) */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
               <FileText size={20} className="text-emerald-600" />
@@ -843,36 +846,63 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
       ) : (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 overflow-x-auto">
-             <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+          {/* Top: Comments */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <Info size={20} className="text-emerald-600" />
+              更新・アップセルコメント
+            </h3>
+            <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100 h-24 overflow-y-auto text-sm text-emerald-900 leading-relaxed">
+              <p className="mb-2"><strong>Enterprise:</strong> 大手X社の全社導入に伴い、NRRが大きく伸長。CSチームのオンボーディング支援が評価された。</p>
+              <p><strong>General:</strong> 小規模契約の解約が数件発生したが、全体のID数は増加傾向を維持。価格改定の影響は軽微。</p>
+            </div>
+          </div>
+
+          {/* Cards: Segment Analysis */}
+          <div>
+             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
               <RefreshCw size={20} className="text-emerald-600" />
               セグメント別 既存売上・維持率分析
             </h3>
-            <table className="w-full text-center min-w-[800px]">
-              <thead className="bg-emerald-50 text-emerald-800 text-sm font-bold">
-                <tr>
-                  <th className="p-3 text-left">セグメント</th>
-                  <th className="p-3">売上金額</th>
-                  <th className="p-3">金額継続率 (NRR)</th>
-                  <th className="p-3">契約更新率</th>
-                  <th className="p-3">ID増減率</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {existingSalesData.map((row) => (
-                  <tr key={row.segment} className="hover:bg-slate-50">
-                    <td className="p-4 text-left font-bold text-lg">{row.segment}</td>
-                    <td className="p-4 text-xl font-bold">{Number(row.sales).toLocaleString()}</td>
-                    <td className="p-2"><CircularRate value={Number(row.nrr)} color="#10b981" /></td>
-                    <td className="p-2"><CircularRate value={Number(row.renewal)} color="#3b82f6" /></td>
-                    <td className="p-2"><CircularRate value={Number(row.id_growth)} color="#f59e0b" /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <SegmentCard title="Enterprise" data={entData} colorClass="bg-[#1e5fa0]" />
+              <SegmentCard title="Mid" data={midData} colorClass="bg-[#3b82f6]" />
+              <SegmentCard title="Small" data={smlData} colorClass="bg-[#f59e0b]" />
+              <SegmentCard title="合計 / 平均" data={totalData} colorClass="bg-[#64748b]" />
+            </div>
           </div>
 
+          {/* Lists: Ordered as requested */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 1. Not Renewed */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <XSquare size={20} className="text-slate-500" />
+                未更新企業一覧
+              </h3>
+              <table className="w-full text-sm text-left">
+                <thead className="bg-slate-50 text-xs">
+                  <tr>
+                    <th className="p-2">顧客名</th>
+                    <th className="p-2">満了日</th>
+                    <th className="p-2">金額</th>
+                    <th className="p-2">担当</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {notRenewedList.map((f, i) => (
+                    <tr key={i}>
+                      <td className="p-2 font-bold">{f.client}</td>
+                      <td className="p-2 text-rose-600">{f.expiry}</td>
+                      <td className="p-2">{f.amount}</td>
+                      <td className="p-2">{f.owner}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* 2. Fluctuations */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
               <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <Activity size={20} className="text-rose-500" />
@@ -901,63 +931,24 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
                 </tbody>
               </table>
             </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <XSquare size={20} className="text-slate-500" />
-                未更新企業一覧
-              </h3>
-              <table className="w-full text-sm text-left">
-                <thead className="bg-slate-50 text-xs">
-                  <tr>
-                    <th className="p-2">顧客名</th>
-                    <th className="p-2">満了日</th>
-                    <th className="p-2">金額</th>
-                    <th className="p-2">担当</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {notRenewedList.map((f, i) => (
-                    <tr key={i}>
-                      <td className="p-2 font-bold">{f.client}</td>
-                      <td className="p-2 text-rose-600">{f.expiry}</td>
-                      <td className="p-2">{f.amount}</td>
-                      <td className="p-2">{f.owner}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <Info size={20} className="text-emerald-600" />
-                更新・アップセルコメント
-              </h3>
-              <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100 h-40 overflow-y-auto text-sm text-emerald-900 leading-relaxed">
-                <p className="mb-2"><strong>Enterprise:</strong> 大手X社の全社導入に伴い、NRRが大きく伸長。CSチームのオンボーディング支援が評価された。</p>
-                <p><strong>General:</strong> 小規模契約の解約が数件発生したが、全体のID数は増加傾向を維持。価格改定の影響は軽微。</p>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <CheckSquare size={20} className="text-emerald-600" />
-                主な更新完了企業
-              </h3>
-              <ul className="space-y-2">
-                {renewedList.map((r, i) => (
-                  <li key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded border border-slate-100">
-                    <span className="font-bold text-sm text-slate-700">{r.client}</span>
-                    <div className="text-xs text-slate-500">
-                      <span className="mr-2">¥{r.amount.toLocaleString()}</span>
-                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">{r.term}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+          {/* 3. Renewed (Full List) */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <CheckSquare size={20} className="text-emerald-600" />
+              更新完了企業一覧 (全件)
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {renewedList.map((r, i) => (
+                <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded border border-slate-100">
+                  <span className="font-bold text-sm text-slate-700">{r.client}</span>
+                  <div className="text-xs text-slate-500">
+                    <span className="mr-2">¥{r.amount.toLocaleString()}</span>
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">{r.term}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -1029,15 +1020,13 @@ const FutureActionTab = ({ data }: any) => {
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                 <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={data.slice(6, 12)} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                        <LineChart data={data.slice(6, 12)} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                            <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} tickFormatter={(value) => `${value/1000}k`} />
-                            <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }} formatter={(value: any) => `¥${Number(value).toLocaleString()}`} />
-                            <Legend iconType="circle" wrapperStyle={{paddingTop: '20px'}} />
-                            <Line type="monotone" dataKey="sales_forecast" name="予測" stroke="#94a3b8" strokeDasharray="5 5" dot={{r: 3}} strokeWidth={2} />
-                            <Line type="monotone" dataKey="sales_budget" name="予算" stroke="#fb7185" strokeWidth={3} dot={{r: 4, strokeWidth: 2, fill: '#fff'}} />
-                            <Line type="monotone" dataKey="sales_target" name="目標" stroke="#f59e0b" strokeWidth={3} dot={{r: 4, strokeWidth: 2, fill: '#fff'}} />
+                            <XAxis dataKey="month" tick={{fontSize: 12}} />
+                            <YAxis domain={['auto', 'auto']} tick={{fontSize: 12}} />
+                            <Tooltip />
+                            <Legend />
+                            <Line type="monotone" dataKey="sales_forecast" name="ベースライン" stroke="#6366f1" strokeWidth={3} />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
