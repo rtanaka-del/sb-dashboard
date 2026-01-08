@@ -50,7 +50,7 @@ type ExistingSalesRecord = {
   id_growth: number;
 };
 
-// --- 初期モックデータ (12ヶ月分用意してエラー回避) ---
+// --- 初期モックデータ ---
 const INITIAL_SALES_DATA: SalesRecord[] = [
   { month: '4月', sales_budget: 12000, sales_target: 13000, sales_actual: 12500, sales_forecast: 12500, cost_budget: 4800, cost_target: 5200, cost_actual: 5000, cost_forecast: 5000, profit_budget: 7200, profit_target: 7800, profit_actual: 7500, profit_forecast: 7500 },
   { month: '5月', sales_budget: 13000, sales_target: 14000, sales_actual: 12800, sales_forecast: 12800, cost_budget: 5200, cost_target: 5600, cost_actual: 5120, cost_forecast: 5120, profit_budget: 7800, profit_target: 8400, profit_actual: 7680, profit_forecast: 7680 },
@@ -86,6 +86,8 @@ const FUNNEL_DATA = [
   { stage: '受注', value: 85 },
 ];
 
+// ★ここに追加しました★
+const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 const PIE_COLORS = { on: '#10b981', off: '#e2e8f0' };
 
 // --- ヘルパー関数 ---
@@ -144,8 +146,7 @@ export default function CBDashboard() {
   useEffect(() => {
     setIsClient(true);
     const today = new Date();
-    // デモ用: 9月基準 (インデックス9 = 1月設定)
-    // ここではあえてモックデータ(4月始まり)と合わせて、インデックス5(9月)を現在とします
+    // デモ用: 9月基準 (インデックス5 = 9月)
     const mIndex = 5; 
     const months = ['4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月', '1月', '2月', '3月'];
     
@@ -203,7 +204,6 @@ export default function CBDashboard() {
     }
   };
 
-  // 安全なデータ取得: データが空でもエラーにならないようにフォールバック
   const prevMonthData = prevMonthName 
     ? (salesData.find(d => d.month === prevMonthName) || salesData[salesData.length - 2] || salesData[0])
     : salesData[0];
@@ -232,7 +232,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.27</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.28</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
