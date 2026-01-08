@@ -86,7 +86,6 @@ const FUNNEL_DATA = [
   { stage: '受注', value: 85 },
 ];
 
-// ★ここに追加しました★
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 const PIE_COLORS = { on: '#10b981', off: '#e2e8f0' };
 
@@ -145,8 +144,7 @@ export default function CBDashboard() {
 
   useEffect(() => {
     setIsClient(true);
-    const today = new Date();
-    // デモ用: 9月基準 (インデックス5 = 9月)
+    // デモ用: 9月基準
     const mIndex = 5; 
     const months = ['4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月', '1月', '2月', '3月'];
     
@@ -232,7 +230,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.28</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.29</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -329,7 +327,7 @@ const NavItem = ({ id, label, icon, activeTab, setActiveTab }: any) => (
 );
 
 const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
-  // 安全装置: データ未準備ならダミーロード画面
+  // 安全装置
   if (!prevData || !thisData || !data) return <div className="p-8 text-slate-500">Loading data...</div>;
 
   const n = (val: any) => Number(val) || 0;
@@ -609,21 +607,21 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
   ];
 
   const fluctuationList = [
-    { client: 'Xホールディングス', segment: 'Enterprise', oldAmount: 2000, newAmount: 2500, diff: '+25%', reason: '部署拡大' },
-    { client: 'Yシステムズ', segment: 'Mid', oldAmount: 500, newAmount: 0, diff: '-100%', reason: '解約 (予算縮小)' },
+    { client: 'Xホールディングス', segment: 'Enterprise', oldAmount: 2000, newAmount: 2500, id_count: 120, diff: '+25%', reason: '部署拡大' },
+    { client: 'Yシステムズ', segment: 'Mid', oldAmount: 500, newAmount: 0, id_count: 0, diff: '-100%', reason: '解約 (予算縮小)' },
   ];
 
   const notRenewedList = [
-    { client: 'Zマート', segment: 'Small', expiry: '2024/09/30', amount: 100, owner: '鈴木' },
+    { client: 'Zマート', segment: 'Small', expiry: '2024/09/30', amount: 100, id_count: 5, owner: '鈴木', comment: '価格面で折り合わず、他社へ乗り換え' },
   ];
 
   const renewedList = [
-    { client: 'アルファ工業', segment: 'Enterprise', amount: 1200, term: '12ヶ月' },
-    { client: 'ベータ銀行', segment: 'Enterprise', amount: 3000, term: '12ヶ月' },
-    { client: 'ガンマ商事', segment: 'Mid', amount: 500, term: '12ヶ月' },
-    { client: 'デルタ通運', segment: 'Small', amount: 120, term: '12ヶ月' },
-    { client: 'イプシロンIT', segment: 'Mid', amount: 800, term: '12ヶ月' },
-    { client: 'ゼータ製薬', segment: 'Enterprise', amount: 4500, term: '12ヶ月' },
+    { client: 'アルファ工業', segment: 'Enterprise', amount: 1200, id_count: 60, term: '12ヶ月' },
+    { client: 'ベータ銀行', segment: 'Enterprise', amount: 3000, id_count: 150, term: '12ヶ月' },
+    { client: 'ガンマ商事', segment: 'Mid', amount: 500, id_count: 25, term: '12ヶ月' },
+    { client: 'デルタ通運', segment: 'Small', amount: 120, id_count: 10, term: '12ヶ月' },
+    { client: 'イプシロンIT', segment: 'Mid', amount: 800, id_count: 40, term: '12ヶ月' },
+    { client: 'ゼータ製薬', segment: 'Enterprise', amount: 4500, id_count: 200, term: '12ヶ月' },
   ];
 
   const CircularRate = ({ label, value, color }: { label: string, value: number, color: string }) => {
@@ -892,18 +890,24 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
                 <thead className="bg-slate-50 text-xs">
                   <tr>
                     <th className="p-2">顧客名</th>
+                    <th className="p-2">セグメント</th>
                     <th className="p-2">満了日</th>
                     <th className="p-2">金額</th>
+                    <th className="p-2">ID数</th>
                     <th className="p-2">担当</th>
+                    <th className="p-2">コメント</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {notRenewedList.map((f, i) => (
                     <tr key={i}>
                       <td className="p-2 font-bold">{f.client}</td>
+                      <td className="p-2"><span className="px-2 py-0.5 bg-slate-100 rounded text-xs">{f.segment}</span></td>
                       <td className="p-2 text-rose-600">{f.expiry}</td>
                       <td className="p-2">{f.amount}</td>
+                      <td className="p-2">{f.id_count}</td>
                       <td className="p-2">{f.owner}</td>
+                      <td className="p-2 text-xs text-slate-500">{f.comment}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -919,8 +923,10 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
                 <thead className="bg-slate-50 text-xs">
                   <tr>
                     <th className="p-2">顧客名</th>
+                    <th className="p-2">セグメント</th>
                     <th className="p-2">変更前</th>
                     <th className="p-2">変更後</th>
+                    <th className="p-2">ID数</th>
                     <th className="p-2">変動</th>
                     <th className="p-2">理由</th>
                   </tr>
@@ -929,8 +935,10 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
                   {fluctuationList.map((f, i) => (
                     <tr key={i}>
                       <td className="p-2 font-bold">{f.client}</td>
+                      <td className="p-2"><span className="px-2 py-0.5 bg-slate-100 rounded text-xs">{f.segment}</span></td>
                       <td className="p-2">{f.oldAmount}</td>
                       <td className="p-2">{f.newAmount}</td>
+                      <td className="p-2">{f.id_count}</td>
                       <td className={`p-2 font-bold ${f.diff.includes('-') ? 'text-rose-600' : 'text-emerald-600'}`}>{f.diff}</td>
                       <td className="p-2 text-xs text-slate-500">{f.reason}</td>
                     </tr>
@@ -948,9 +956,12 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {renewedList.map((r, i) => (
                 <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded border border-slate-100">
-                  <span className="font-bold text-sm text-slate-700">{r.client}</span>
-                  <div className="text-xs text-slate-500">
-                    <span className="mr-2">¥{r.amount.toLocaleString()}</span>
+                  <div>
+                    <span className="font-bold text-sm text-slate-700 block">{r.client}</span>
+                    <span className="px-2 py-0.5 bg-slate-200 text-slate-600 rounded text-[10px] mt-1 inline-block">{r.segment}</span>
+                  </div>
+                  <div className="text-xs text-slate-500 text-right">
+                    <div className="mb-1"><span className="font-bold">¥{r.amount.toLocaleString()}</span> / {r.id_count} IDs</div>
                     <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">{r.term}</span>
                   </div>
                 </div>
