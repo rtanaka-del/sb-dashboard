@@ -55,11 +55,9 @@ type ExistingSalesRecord = {
 const INITIAL_SALES_DATA: SalesRecord[] = [
   { month: '1月', sales_budget: 12000, sales_target: 13000, sales_actual: 12500, sales_forecast: 12500, cost_budget: 4800, cost_target: 5200, cost_actual: 5000, cost_forecast: 5000, profit_budget: 7200, profit_target: 7800, profit_actual: 7500, profit_forecast: 7500 },
   { month: '2月', sales_budget: 13000, sales_target: 14000, sales_actual: 12800, sales_forecast: 12800, cost_budget: 5200, cost_target: 5600, cost_actual: 5120, cost_forecast: 5120, profit_budget: 7800, profit_target: 8400, profit_actual: 7680, profit_forecast: 7680 },
-  // ... 他の月も必要に応じて補完されます
 ];
 
 // --- 表示確認用ダミーデータ (New) ---
-// スプレッドシートが空でもこれを表示します
 const MOCK_NEW_SALES_DATA: NewSalesRecord[] = [
   { segment: 'Enterprise', budget: 5000, target: 5500, actual: 4800, last_year: 4000, count: 5, win_rate: 35, lead_time: 120, unit_price: 840, id_price: 2000, duration: 12 },
   { segment: 'Mid', budget: 3000, target: 3300, actual: 3200, last_year: 2800, count: 12, win_rate: 45, lead_time: 60, unit_price: 291, id_price: 1500, duration: 12 },
@@ -122,7 +120,7 @@ const formatPercent = (value: number | null | undefined) => {
 export default function CBDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [salesData, setSalesData] = useState<SalesRecord[]>(INITIAL_SALES_DATA);
-  const [newSalesData, setNewSalesData] = useState<NewSalesRecord[]>(MOCK_NEW_SALES_DATA); // 初期値をダミーに
+  const [newSalesData, setNewSalesData] = useState<NewSalesRecord[]>(MOCK_NEW_SALES_DATA);
   const [existingSalesData, setExistingSalesData] = useState<ExistingSalesRecord[]>(INITIAL_EXISTING_SALES);
 
   const [sheetInput, setSheetInput] = useState('1UijNvely71JDu73oBoBpho9P84fT-yPmNH2QVVstwO4'); 
@@ -139,13 +137,13 @@ export default function CBDashboard() {
   useEffect(() => {
     setIsClient(true);
     const today = new Date();
-    const mIndex = today.getMonth(); // 0 = 1月
+    const mIndex = today.getMonth(); 
     
-    // 今月 (例: 1月)
+    // 今月 (1月)
     const thisM = mIndex + 1;
     setThisMonthName(`${thisM}月`);
 
-    // 前月 (例: 12月) - インデックス計算
+    // 前月 (12月)
     const prevMIndex = mIndex === 0 ? 11 : mIndex - 1;
     const prevM = prevMIndex + 1;
     setPrevMonthName(`${prevM}月`);
@@ -203,7 +201,6 @@ export default function CBDashboard() {
       if (mainData.length > 0) setSalesData(mainData);
 
       const newData = parseCSV(results[1]);
-      // データがあれば上書き、なければダミーを維持
       if (newData.length > 0 && newData[0].segment) {
           setNewSalesData(newData);
       }
@@ -224,12 +221,10 @@ export default function CBDashboard() {
     }
   };
 
-  // 前月データ (実績確定)
   const prevMonthData = prevMonthName 
     ? (salesData.find(d => d.month === prevMonthName) || salesData[salesData.length - 1])
     : salesData[salesData.length - 1];
 
-  // 当月データ (予測)
   const thisMonthData = thisMonthName
     ? (salesData.find(d => d.month === thisMonthName) || salesData[0])
     : salesData[0];
@@ -254,7 +249,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.24</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.25</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -350,46 +345,36 @@ const NavItem = ({ id, label, icon, activeTab, setActiveTab }: any) => (
   </button>
 );
 
-// --- OverviewTab (修正：タイトル変更・テーブル追加) ---
 const OverviewTab = ({ data, prevData, thisData }: any) => {
-  // 安全な計算用ヘルパー
   const n = (val: any) => Number(val) || 0;
 
-  // 前月 (実績ベース)
   const prevSalesBudget = n(prevData.sales_budget);
   const prevSalesTarget = n(prevData.sales_target);
-  const prevSalesActual = n(prevData.sales_actual) || n(prevData.sales_forecast); // 実績優先、なければ予測
-  const prevSalesBudgetDiff = prevSalesBudget ? (prevSalesActual / prevSalesBudget) * 100 : 0;
-  const prevSalesTargetDiff = prevSalesTarget ? (prevSalesActual / prevSalesTarget) * 100 : 0;
-
+  const prevSalesActual = n(prevData.sales_actual) || n(prevData.sales_forecast); 
   const prevCostActual = n(prevData.cost_actual) || n(prevData.cost_forecast);
   const prevProfitActual = n(prevData.profit_actual) || n(prevData.profit_forecast);
 
-  // 当月 (予測ベース)
   const thisSalesBudget = n(thisData.sales_budget);
   const thisSalesTarget = n(thisData.sales_target);
-  const thisSalesForecast = n(thisData.sales_forecast); // 当月は予測を使用
+  const thisSalesForecast = n(thisData.sales_forecast); 
   const thisSalesBudgetDiff = thisSalesBudget ? (thisSalesForecast / thisSalesBudget) * 100 : 0;
   const thisSalesTargetDiff = thisSalesTarget ? (thisSalesForecast / thisSalesTarget) * 100 : 0;
 
   const thisCostForecast = n(thisData.cost_forecast);
   const thisProfitForecast = n(thisData.profit_forecast);
 
-  // グラフ用データ (前月実績)
   const prevChartData = [
     { name: '売上', budget: prevSalesBudget, target: prevSalesTarget, actual: prevSalesActual },
     { name: 'コスト', budget: n(prevData.cost_budget), target: n(prevData.cost_target), actual: prevCostActual },
     { name: '貢献利益', budget: n(prevData.profit_budget), target: n(prevData.profit_target), actual: prevProfitActual },
   ];
 
-  // テーブル用データ (前月)
   const prevTableData = [
     { name: '売上', budget: prevSalesBudget, target: prevSalesTarget, result: prevSalesActual },
     { name: 'コスト', budget: n(prevData.cost_budget), target: n(prevData.cost_target), result: prevCostActual },
     { name: '貢献利益', budget: n(prevData.profit_budget), target: n(prevData.profit_target), result: prevProfitActual },
   ];
 
-  // テーブル用データ (当月)
   const thisTableData = [
     { name: '売上', budget: thisSalesBudget, target: thisSalesTarget, result: thisSalesForecast },
     { name: 'コスト', budget: n(thisData.cost_budget), target: n(thisData.cost_target), result: thisCostForecast },
@@ -398,7 +383,6 @@ const OverviewTab = ({ data, prevData, thisData }: any) => {
 
   return (
     <div className="space-y-8">
-      {/* 1. 棒グラフ (前月実績) */}
       <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
         <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
             <Activity size={20} className="text-indigo-600" />
@@ -432,7 +416,6 @@ const OverviewTab = ({ data, prevData, thisData }: any) => {
         </div>
       </div>
 
-      {/* 2. 前月サマリー詳細 */}
       <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
         <h2 className="text-xl font-bold text-slate-800 mb-4 border-l-4 border-indigo-500 pl-3">
             [前月サマリー詳細] ({prevData.month})
@@ -469,7 +452,6 @@ const OverviewTab = ({ data, prevData, thisData }: any) => {
         </div>
       </div>
 
-      {/* 3. 当月サマリー詳細 (追加) */}
       <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
         <h2 className="text-xl font-bold text-slate-800 mb-4 border-l-4 border-emerald-500 pl-3">
             [当月サマリー詳細] ({thisData.month} 予測)
@@ -564,17 +546,16 @@ const OverviewTab = ({ data, prevData, thisData }: any) => {
   );
 };
 
-// --- Sales Analysis Tab (修正：ダミーデータ適用・表示制限) ---
 const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: NewSalesRecord[], existingSalesData: ExistingSalesRecord[] }) => {
   const [subTab, setSubTab] = useState<'new' | 'existing'>('new');
 
-  // Hardcoded Lists
+  // Hardcoded Lists with Correct Types
   const dealList = [
-    { date: '2024/09/25', client: '株式会社A商事', segment: 'Enterprise', product: 'Premium Plan', amount: 1500, owner: '佐藤' },
-    { date: '2024/09/20', client: 'Bテック株式会社', segment: 'Mid', product: 'Standard Plan', amount: 400, owner: '田中' },
-    { date: '2024/09/18', client: 'Cソリューションズ', segment: 'Mid', product: 'Standard Plan', amount: 350, owner: '田中' },
-    { date: '2024/09/15', client: 'D物流', segment: 'Small', product: 'Lite Plan', amount: 50, owner: '鈴木' },
-    { date: '2024/09/10', client: 'E不動産', segment: 'Enterprise', product: 'Premium Plan', amount: 1200, owner: '佐藤' },
+    { date: '2024/09/25', client: '株式会社A商事', segment: 'Enterprise', amount: 1500, id_count: 50, duration: '12ヶ月', owner: '佐藤' },
+    { date: '2024/09/20', client: 'Bテック株式会社', segment: 'Mid', amount: 400, id_count: 20, duration: '12ヶ月', owner: '田中' },
+    { date: '2024/09/18', client: 'Cソリューションズ', segment: 'Mid', amount: 350, id_count: 15, duration: '6ヶ月', owner: '田中' },
+    { date: '2024/09/15', client: 'D物流', segment: 'Small', amount: 50, id_count: 5, duration: '1ヶ月', owner: '鈴木' },
+    { date: '2024/09/10', client: 'E不動産', segment: 'Enterprise', amount: 1200, id_count: 40, duration: '12ヶ月', owner: '佐藤' },
   ];
 
   const fluctuationList = [
@@ -615,10 +596,8 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
     );
   };
 
-  // 表示用データのフィルタリング (Enterprise, Mid, Smallのみ)
   const displayData = newSalesData.filter(d => ['Enterprise', 'Mid', 'Small'].includes(d.segment));
 
-  // 新規売上のグラフ用データ生成
   const graphData = displayData.map(d => ({
     segment: d.segment,
     budget: Number(d.budget) || 0,
@@ -653,7 +632,6 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
       {subTab === 'new' ? (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           
-          {/* 1) Top Section: Graphs */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
               <Activity size={20} className="text-indigo-600" />
@@ -679,7 +657,6 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
             </div>
           </div>
 
-          {/* 2) Middle Section: Table */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 overflow-x-auto">
             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
               <Building size={20} className="text-indigo-600" />
@@ -715,7 +692,6 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
             </table>
           </div>
 
-          {/* 3) Bottom Section: Deal List */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
               <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
@@ -740,7 +716,7 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
                         <td className="p-3 font-bold text-slate-800">{d.client}</td>
                         <td className="p-3"><span className="px-2 py-0.5 bg-slate-100 rounded text-xs">{d.segment}</span></td>
                         <td className="p-3 text-right font-medium">{d.amount.toLocaleString()}</td>
-                        <td className="p-3 text-right">{d.id_count}</td> // ここ修正
+                        <td className="p-3 text-right">{d.id_count}</td>
                         <td className="p-3">{d.duration}</td>
                         <td className="p-3">{d.owner}</td>
                       </tr>
@@ -750,7 +726,6 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
               </div>
             </div>
 
-            {/* 4) Comments */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
               <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <Info size={20} className="text-indigo-600" />
