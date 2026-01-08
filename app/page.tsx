@@ -28,7 +28,6 @@ type SalesRecord = {
   profit_forecast: number;
 };
 
-// 新規売上分析用の型
 type NewSalesRecord = {
   segment: string;
   budget: number;
@@ -41,7 +40,6 @@ type NewSalesRecord = {
   duration: number;
 };
 
-// 既存売上分析用の型
 type ExistingSalesRecord = {
   segment: string;
   sales: number;
@@ -51,27 +49,20 @@ type ExistingSalesRecord = {
 };
 
 // --- 初期モックデータ ---
-// Main
 const INITIAL_SALES_DATA: SalesRecord[] = [
   { month: '1月', sales_budget: 12000, sales_target: 13000, sales_actual: 12500, sales_forecast: 12500, cost_budget: 4800, cost_target: 5200, cost_actual: 5000, cost_forecast: 5000, profit_budget: 7200, profit_target: 7800, profit_actual: 7500, profit_forecast: 7500 },
-  // ... (エラー防止のため初期データはシンプルに保持)
+  // ...データがない場合のフォールバックとして1件だけ定義
 ];
 
-// New
 const INITIAL_NEW_SALES: NewSalesRecord[] = [
   { segment: 'Enterprise', budget: 5000, actual: 4200, count: 5, win_rate: 35, lead_time: 120, unit_price: 840, id_price: 2000, duration: 12 },
-  { segment: 'Mid', budget: 3000, actual: 3500, count: 12, win_rate: 45, lead_time: 60, unit_price: 291, id_price: 1500, duration: 12 },
-  { segment: 'Small', budget: 1500, actual: 1800, count: 30, win_rate: 60, lead_time: 30, unit_price: 60, id_price: 1200, duration: 12 },
 ];
 
-// Existing
 const INITIAL_EXISTING_SALES: ExistingSalesRecord[] = [
   { segment: 'Enterprise', sales: 12500, nrr: 115, renewal: 98, id_growth: 110 },
-  { segment: 'Mid', sales: 4800, nrr: 102, renewal: 92, id_growth: 105 },
-  { segment: 'Small', sales: 1200, nrr: 85, renewal: 80, id_growth: 90 },
 ];
 
-// ★ここに追加しました！★
+// ファネルデータ定義
 const FUNNEL_DATA = [
   { stage: 'リード獲得', value: 1200 },
   { stage: '商談化', value: 450 },
@@ -82,7 +73,7 @@ const FUNNEL_DATA = [
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 const PIE_COLORS = { on: '#3b82f6', off: '#e2e8f0' };
 
-// --- ヘルパー関数: 汎用CSVパース ---
+// --- ヘルパー関数: 安全なCSVパース ---
 const parseCSV = (csvText: string): any[] => {
   const cleanText = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
   const lines = cleanText.split('\n');
@@ -93,11 +84,14 @@ const parseCSV = (csvText: string): any[] => {
     const values = line.split(',');
     const record: any = {};
     headers.forEach((header, index) => {
-      const val = values[index]?.trim().replace(/"/g, '');
-      // 数字に変換できるものは数字に、それ以外は文字列に
-      if (val === '' || val === undefined) {
+      // カンマ除去と空白除去
+      let val = values[index]?.trim().replace(/"/g, '');
+      if (val) val = val.replace(/,/g, ''); // "1,000" -> "1000"
+
+      // 数字変換
+      if (val === '' || val === undefined || val === '-') {
         record[header] = null;
-      } else if (!isNaN(Number(val)) && val !== '') {
+      } else if (!isNaN(Number(val))) {
         record[header] = Number(val);
       } else {
         record[header] = val;
@@ -120,7 +114,6 @@ const formatPercent = (value: number | null | undefined) => {
 // --- メインコンポーネント ---
 export default function CBDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
-  // 3つのステートを用意
   const [salesData, setSalesData] = useState<SalesRecord[]>(INITIAL_SALES_DATA);
   const [newSalesData, setNewSalesData] = useState<NewSalesRecord[]>(INITIAL_NEW_SALES);
   const [existingSalesData, setExistingSalesData] = useState<ExistingSalesRecord[]>(INITIAL_EXISTING_SALES);
@@ -130,11 +123,18 @@ export default function CBDashboard() {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [fileName, setFileName] = useState('');
-  const [currentMonthName, setCurrentMonthName] = useState('');
+  
+  // 安全な日付管理
+  const [currentMonthName, setCurrentMonthName] = useState<string>('');
+  const [currentMonthIndex, setCurrentMonthIndex] = useState<number>(0);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true); // クライアントサイドでのみレンダリングを許可
     const today = new Date();
-    const m = today.getMonth() + 1; 
+    const mIndex = today.getMonth(); // 0=1月
+    const m = mIndex + 1; 
+    setCurrentMonthIndex(mIndex);
     setCurrentMonthName(`${m}月`);
     
     if (sheetInput) {
@@ -150,7 +150,7 @@ export default function CBDashboard() {
         try {
           const text = e.target?.result as string;
           const parsed = parseCSV(text);
-          setSalesData(parsed); // 簡易的にMainへ
+          setSalesData(parsed);
           setFileName(file.name);
           setSyncStatus('success');
           setTimeout(() => setSyncStatus('idle'), 3000);
@@ -163,7 +163,6 @@ export default function CBDashboard() {
     }
   };
 
-  // Google Sheets 同期処理 (3タブ同時取得)
   const handleSheetSync = async () => {
     if (!sheetInput) return;
     setIsSyncing(true);
@@ -174,7 +173,6 @@ export default function CBDashboard() {
       const idMatch = sheetInput.match(/\/d\/([a-zA-Z0-9-_]+)/);
       const cleanId = idMatch ? idMatch[1] : sheetInput;
 
-      // Promise.allで3つのシートを並列取得
       const sheets = ['Main', 'New', 'Existing'];
       const requests = sheets.map(sheetName => 
         fetch(`https://docs.google.com/spreadsheets/d/${cleanId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`)
@@ -186,7 +184,6 @@ export default function CBDashboard() {
 
       const results = await Promise.all(requests);
 
-      // それぞれパースしてStateにセット
       const mainData = parseCSV(results[0]);
       if (mainData.length > 0) setSalesData(mainData);
 
@@ -213,13 +210,16 @@ export default function CBDashboard() {
     ? (salesData.find(d => d.month === currentMonthName) || salesData[salesData.length - 1])
     : salesData[salesData.length - 1];
 
+  // クライアントロード前は何も表示しない（ハイドレーションエラー防止）
+  if (!isClient) return null;
+
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview': return <OverviewTab data={salesData} currentData={currentMonthData} />;
+      case 'overview': return <OverviewTab data={salesData} currentData={currentMonthData} monthIndex={currentMonthIndex} />;
       case 'sales': return <SalesAnalysisTab newSalesData={newSalesData} existingSalesData={existingSalesData} />;
       case 'process': return <ProcessAnalysisTab />;
       case 'future': return <FutureActionTab data={salesData} />;
-      default: return <OverviewTab data={salesData} currentData={currentMonthData} />;
+      default: return <OverviewTab data={salesData} currentData={currentMonthData} monthIndex={currentMonthIndex} />;
     }
   };
 
@@ -231,7 +231,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.21</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.22</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -327,48 +327,55 @@ const NavItem = ({ id, label, icon, activeTab, setActiveTab }: any) => (
   </button>
 );
 
-const OverviewTab = ({ data, currentData }: any) => {
-  const today = new Date();
-  const currentMonthIdx = today.getMonth(); 
-  
-  const quarterIdx = Math.floor(currentMonthIdx / 3);
+const OverviewTab = ({ data, currentData, monthIndex }: any) => {
+  // 安全装置: データがまだ無い場合はローディング表示
+  if (!currentData || !data) return <div className="p-4 text-slate-500">Loading data...</div>;
+
+  // Q1-Q4 自動判定 (monthIndexは親から受け取る)
+  const quarterIdx = Math.floor(monthIndex / 3);
   const quarterStartIdx = quarterIdx * 3;
   const quarterEndIdx = quarterStartIdx + 3;
   const quarterData = data.slice(quarterStartIdx, quarterEndIdx);
 
-  const halfIdx = currentMonthIdx < 6 ? 0 : 1;
+  const halfIdx = monthIndex < 6 ? 0 : 1;
   const halfStartIdx = halfIdx === 0 ? 0 : 6;
   const halfEndIdx = halfStartIdx + 6;
   const halfData = data.slice(halfStartIdx, halfEndIdx);
 
-  const qBudget = quarterData.reduce((acc: number, cur: any) => acc + cur.sales_budget, 0);
-  const qTarget = quarterData.reduce((acc: number, cur: any) => acc + cur.sales_target, 0);
-  const qForecast = quarterData.reduce((acc: number, cur: any) => acc + cur.sales_forecast, 0);
+  // 安全な計算 (数値でない場合は0扱い)
+  const safeSum = (arr: any[], key: string) => arr.reduce((acc, cur) => acc + (Number(cur[key]) || 0), 0);
+
+  const qBudget = safeSum(quarterData, 'sales_budget');
+  const qTarget = safeSum(quarterData, 'sales_target');
+  const qForecast = safeSum(quarterData, 'sales_forecast');
   const qBudgetAchieve = qBudget ? (qForecast / qBudget) * 100 : 0;
   const qTargetAchieve = qTarget ? (qForecast / qTarget) * 100 : 0;
 
-  const hBudget = halfData.reduce((acc: number, cur: any) => acc + cur.sales_budget, 0);
-  const hTarget = halfData.reduce((acc: number, cur: any) => acc + cur.sales_target, 0);
-  const hForecast = halfData.reduce((acc: number, cur: any) => acc + cur.sales_forecast, 0);
+  const hBudget = safeSum(halfData, 'sales_budget');
+  const hTarget = safeSum(halfData, 'sales_target');
+  const hForecast = safeSum(halfData, 'sales_forecast');
   const hBudgetAchieve = hBudget ? (hForecast / hBudget) * 100 : 0;
   const hTargetAchieve = hTarget ? (hForecast / hTarget) * 100 : 0;
 
-  const salesBudget = currentData.sales_budget;
-  const salesTarget = currentData.sales_target;
-  const salesActual = currentData.sales_actual || currentData.sales_forecast;
+  const salesBudget = Number(currentData.sales_budget) || 0;
+  const salesTarget = Number(currentData.sales_target) || 0;
+  const salesActual = Number(currentData.sales_actual) || Number(currentData.sales_forecast) || 0;
   const budgetAchieve = salesBudget ? (salesActual / salesBudget) * 100 : 0;
   const targetAchieve = salesTarget ? (salesActual / salesTarget) * 100 : 0;
 
+  const costActualVal = Number(currentData.cost_actual) || Number(currentData.cost_forecast) || 0;
+  const profitActualVal = Number(currentData.profit_actual) || Number(currentData.profit_forecast) || 0;
+
   const comparisonData = [
     { name: '売上', budget: salesBudget, target: salesTarget, actual: salesActual },
-    { name: 'コスト', budget: currentData.cost_budget, target: currentData.cost_target, actual: currentData.cost_actual || currentData.cost_forecast },
-    { name: '貢献利益', budget: currentData.profit_budget, target: currentData.profit_target, actual: currentData.profit_actual || currentData.profit_forecast },
+    { name: 'コスト', budget: Number(currentData.cost_budget) || 0, target: Number(currentData.cost_target) || 0, actual: costActualVal },
+    { name: '貢献利益', budget: Number(currentData.profit_budget) || 0, target: Number(currentData.profit_target) || 0, actual: profitActualVal },
   ];
 
   const summaryTableData = [
     { name: '売上', budget: salesBudget, target: salesTarget, actual: salesActual },
-    { name: 'コスト', budget: currentData.cost_budget, target: currentData.cost_target, actual: currentData.cost_actual || currentData.cost_forecast },
-    { name: '貢献利益', budget: currentData.profit_budget, target: currentData.profit_target, actual: currentData.profit_actual || currentData.profit_forecast },
+    { name: 'コスト', budget: Number(currentData.cost_budget) || 0, target: Number(currentData.cost_target) || 0, actual: costActualVal },
+    { name: '貢献利益', budget: Number(currentData.profit_budget) || 0, target: Number(currentData.profit_target) || 0, actual: profitActualVal },
   ];
 
   return (
@@ -454,7 +461,7 @@ const OverviewTab = ({ data, currentData }: any) => {
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                         <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
                         <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} tickFormatter={(value) => `${value/1000}k`} />
-                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }} formatter={(value: any) => `¥${value.toLocaleString()}`} />
+                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }} formatter={(value: any) => `¥${Number(value).toLocaleString()}`} />
                         <Legend iconType="circle" wrapperStyle={{paddingTop: '20px'}} />
                         <ReferenceLine x="11月" stroke="#10b981" strokeDasharray="3 3">
                             <Label value="Current" position="top" fill="#10b981" fontSize={10} fontWeight="bold" offset={10} />
@@ -531,7 +538,7 @@ const OverviewTab = ({ data, currentData }: any) => {
 const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: NewSalesRecord[], existingSalesData: ExistingSalesRecord[] }) => {
   const [subTab, setSubTab] = useState<'new' | 'existing'>('new');
 
-  // Hardcoded Lists for Demo
+  // Hardcoded Lists
   const dealList = [
     { date: '2024/09/25', client: '株式会社A商事', segment: 'Enterprise', product: 'Premium Plan', amount: 1500, owner: '佐藤' },
     { date: '2024/09/20', client: 'Bテック株式会社', segment: 'Mid', product: 'Standard Plan', amount: 400, owner: '田中' },
@@ -623,18 +630,20 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {newSalesData.map((row) => {
-                  const achieve = row.budget ? (row.actual / row.budget) * 100 : 0;
+                  const safeBudget = Number(row.budget) || 0;
+                  const safeActual = Number(row.actual) || 0;
+                  const achieve = safeBudget ? (safeActual / safeBudget) * 100 : 0;
                   return (
                     <tr key={row.segment} className="hover:bg-slate-50">
                       <td className="p-3 text-left font-bold">{row.segment}</td>
-                      <td className="p-3">{row.budget.toLocaleString()}</td>
-                      <td className="p-3 font-bold text-indigo-600">{row.actual.toLocaleString()}</td>
+                      <td className="p-3">{safeBudget.toLocaleString()}</td>
+                      <td className="p-3 font-bold text-indigo-600">{safeActual.toLocaleString()}</td>
                       <td className="p-3">{formatPercent(achieve)}</td>
                       <td className="p-3 border-l border-slate-200">{row.count}件</td>
                       <td className="p-3">{row.win_rate}%</td>
                       <td className="p-3">{row.lead_time}日</td>
-                      <td className="p-3">{row.unit_price.toLocaleString()}</td>
-                      <td className="p-3">{row.id_price.toLocaleString()}</td>
+                      <td className="p-3">{Number(row.unit_price).toLocaleString()}</td>
+                      <td className="p-3">{Number(row.id_price).toLocaleString()}</td>
                       <td className="p-3">{row.duration}ヶ月</td>
                     </tr>
                   );
@@ -713,10 +722,10 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
                 {existingSalesData.map((row) => (
                   <tr key={row.segment} className="hover:bg-slate-50">
                     <td className="p-4 text-left font-bold text-lg">{row.segment}</td>
-                    <td className="p-4 text-xl font-bold">{row.sales.toLocaleString()}</td>
-                    <td className="p-2"><CircularRate value={row.nrr} color="#10b981" /></td>
-                    <td className="p-2"><CircularRate value={row.renewal} color="#3b82f6" /></td>
-                    <td className="p-2"><CircularRate value={row.id_growth} color="#f59e0b" /></td>
+                    <td className="p-4 text-xl font-bold">{Number(row.sales).toLocaleString()}</td>
+                    <td className="p-2"><CircularRate value={Number(row.nrr)} color="#10b981" /></td>
+                    <td className="p-2"><CircularRate value={Number(row.renewal)} color="#3b82f6" /></td>
+                    <td className="p-2"><CircularRate value={Number(row.id_growth)} color="#f59e0b" /></td>
                   </tr>
                 ))}
               </tbody>
