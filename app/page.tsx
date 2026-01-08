@@ -28,13 +28,13 @@ type SalesRecord = {
   profit_forecast: number;
 };
 
-// 新規売上分析用の型（項目追加）
+// 新規売上分析用の型
 type NewSalesRecord = {
   segment: string;
   budget: number;
-  target: number; // 追加
+  target: number;
   actual: number;
-  last_year: number; // 追加
+  last_year: number;
   count: number;
   win_rate: number;
   lead_time: number;
@@ -51,15 +51,19 @@ type ExistingSalesRecord = {
   id_growth: number;
 };
 
-// --- 初期モックデータ ---
+// --- 初期モックデータ (Main) ---
 const INITIAL_SALES_DATA: SalesRecord[] = [
   { month: '1月', sales_budget: 12000, sales_target: 13000, sales_actual: 12500, sales_forecast: 12500, cost_budget: 4800, cost_target: 5200, cost_actual: 5000, cost_forecast: 5000, profit_budget: 7200, profit_target: 7800, profit_actual: 7500, profit_forecast: 7500 },
+  { month: '2月', sales_budget: 13000, sales_target: 14000, sales_actual: 12800, sales_forecast: 12800, cost_budget: 5200, cost_target: 5600, cost_actual: 5120, cost_forecast: 5120, profit_budget: 7800, profit_target: 8400, profit_actual: 7680, profit_forecast: 7680 },
+  // ... 他の月も必要に応じて補完されます
 ];
 
-const INITIAL_NEW_SALES: NewSalesRecord[] = [
-  { segment: 'Enterprise', budget: 5000, target: 5500, actual: 4200, last_year: 3800, count: 5, win_rate: 35, lead_time: 120, unit_price: 840, id_price: 2000, duration: 12 },
-  { segment: 'Mid', budget: 3000, target: 3300, actual: 3500, last_year: 2500, count: 12, win_rate: 45, lead_time: 60, unit_price: 291, id_price: 1500, duration: 12 },
-  { segment: 'Small', budget: 1500, target: 1800, actual: 1800, last_year: 1000, count: 30, win_rate: 60, lead_time: 30, unit_price: 60, id_price: 1200, duration: 12 },
+// --- 表示確認用ダミーデータ (New) ---
+// スプレッドシートが空でもこれを表示します
+const MOCK_NEW_SALES_DATA: NewSalesRecord[] = [
+  { segment: 'Enterprise', budget: 5000, target: 5500, actual: 4800, last_year: 4000, count: 5, win_rate: 35, lead_time: 120, unit_price: 840, id_price: 2000, duration: 12 },
+  { segment: 'Mid', budget: 3000, target: 3300, actual: 3200, last_year: 2800, count: 12, win_rate: 45, lead_time: 60, unit_price: 291, id_price: 1500, duration: 12 },
+  { segment: 'Small', budget: 1500, target: 1800, actual: 1600, last_year: 1200, count: 30, win_rate: 60, lead_time: 30, unit_price: 60, id_price: 1200, duration: 12 },
 ];
 
 const INITIAL_EXISTING_SALES: ExistingSalesRecord[] = [
@@ -79,7 +83,7 @@ const FUNNEL_DATA = [
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 const PIE_COLORS = { on: '#3b82f6', off: '#e2e8f0' };
 
-// --- ヘルパー関数: 安全なCSVパース ---
+// --- ヘルパー関数 ---
 const parseCSV = (csvText: string): any[] => {
   const cleanText = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
   const lines = cleanText.split('\n');
@@ -118,7 +122,7 @@ const formatPercent = (value: number | null | undefined) => {
 export default function CBDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [salesData, setSalesData] = useState<SalesRecord[]>(INITIAL_SALES_DATA);
-  const [newSalesData, setNewSalesData] = useState<NewSalesRecord[]>(INITIAL_NEW_SALES);
+  const [newSalesData, setNewSalesData] = useState<NewSalesRecord[]>(MOCK_NEW_SALES_DATA); // 初期値をダミーに
   const [existingSalesData, setExistingSalesData] = useState<ExistingSalesRecord[]>(INITIAL_EXISTING_SALES);
 
   const [sheetInput, setSheetInput] = useState('1UijNvely71JDu73oBoBpho9P84fT-yPmNH2QVVstwO4'); 
@@ -127,17 +131,26 @@ export default function CBDashboard() {
   const [errorMessage, setErrorMessage] = useState('');
   const [fileName, setFileName] = useState('');
   
-  const [currentMonthName, setCurrentMonthName] = useState<string>('');
+  const [prevMonthName, setPrevMonthName] = useState<string>('');
+  const [thisMonthName, setThisMonthName] = useState<string>('');
   const [currentMonthIndex, setCurrentMonthIndex] = useState<number>(0);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
     const today = new Date();
-    const mIndex = today.getMonth(); 
-    const m = mIndex + 1; 
+    const mIndex = today.getMonth(); // 0 = 1月
+    
+    // 今月 (例: 1月)
+    const thisM = mIndex + 1;
+    setThisMonthName(`${thisM}月`);
+
+    // 前月 (例: 12月) - インデックス計算
+    const prevMIndex = mIndex === 0 ? 11 : mIndex - 1;
+    const prevM = prevMIndex + 1;
+    setPrevMonthName(`${prevM}月`);
+
     setCurrentMonthIndex(mIndex);
-    setCurrentMonthName(`${m}月`);
     
     if (sheetInput) {
        handleSheetSync();
@@ -145,7 +158,6 @@ export default function CBDashboard() {
   }, []);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    // 簡易実装（Mainのみ）
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -191,7 +203,10 @@ export default function CBDashboard() {
       if (mainData.length > 0) setSalesData(mainData);
 
       const newData = parseCSV(results[1]);
-      if (newData.length > 0) setNewSalesData(newData);
+      // データがあれば上書き、なければダミーを維持
+      if (newData.length > 0 && newData[0].segment) {
+          setNewSalesData(newData);
+      }
 
       const existData = parseCSV(results[2]);
       if (existData.length > 0) setExistingSalesData(existData);
@@ -209,19 +224,25 @@ export default function CBDashboard() {
     }
   };
 
-  const currentMonthData = currentMonthName 
-    ? (salesData.find(d => d.month === currentMonthName) || salesData[salesData.length - 1])
+  // 前月データ (実績確定)
+  const prevMonthData = prevMonthName 
+    ? (salesData.find(d => d.month === prevMonthName) || salesData[salesData.length - 1])
     : salesData[salesData.length - 1];
+
+  // 当月データ (予測)
+  const thisMonthData = thisMonthName
+    ? (salesData.find(d => d.month === thisMonthName) || salesData[0])
+    : salesData[0];
 
   if (!isClient) return null;
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview': return <OverviewTab data={salesData} currentData={currentMonthData} monthIndex={currentMonthIndex} />;
+      case 'overview': return <OverviewTab data={salesData} prevData={prevMonthData} thisData={thisMonthData} monthIndex={currentMonthIndex} />;
       case 'sales': return <SalesAnalysisTab newSalesData={newSalesData} existingSalesData={existingSalesData} />;
       case 'process': return <ProcessAnalysisTab />;
       case 'future': return <FutureActionTab data={salesData} />;
-      default: return <OverviewTab data={salesData} currentData={currentMonthData} monthIndex={currentMonthIndex} />;
+      default: return <OverviewTab data={salesData} prevData={prevMonthData} thisData={thisMonthData} monthIndex={currentMonthIndex} />;
     }
   };
 
@@ -233,7 +254,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.23</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.11.24</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -329,58 +350,60 @@ const NavItem = ({ id, label, icon, activeTab, setActiveTab }: any) => (
   </button>
 );
 
-// --- OverviewTab (省略せず保持) ---
-const OverviewTab = ({ data, currentData, monthIndex }: any) => {
-  if (!currentData || !data) return <div className="p-4 text-slate-500">Loading data...</div>;
+// --- OverviewTab (修正：タイトル変更・テーブル追加) ---
+const OverviewTab = ({ data, prevData, thisData }: any) => {
+  // 安全な計算用ヘルパー
+  const n = (val: any) => Number(val) || 0;
 
-  const quarterIdx = Math.floor(monthIndex / 3);
-  const quarterStartIdx = quarterIdx * 3;
-  const quarterEndIdx = quarterStartIdx + 3;
-  const quarterData = data.slice(quarterStartIdx, quarterEndIdx);
+  // 前月 (実績ベース)
+  const prevSalesBudget = n(prevData.sales_budget);
+  const prevSalesTarget = n(prevData.sales_target);
+  const prevSalesActual = n(prevData.sales_actual) || n(prevData.sales_forecast); // 実績優先、なければ予測
+  const prevSalesBudgetDiff = prevSalesBudget ? (prevSalesActual / prevSalesBudget) * 100 : 0;
+  const prevSalesTargetDiff = prevSalesTarget ? (prevSalesActual / prevSalesTarget) * 100 : 0;
 
-  const halfIdx = monthIndex < 6 ? 0 : 1;
-  const halfStartIdx = halfIdx === 0 ? 0 : 6;
-  const halfEndIdx = halfStartIdx + 6;
-  const halfData = data.slice(halfStartIdx, halfEndIdx);
+  const prevCostActual = n(prevData.cost_actual) || n(prevData.cost_forecast);
+  const prevProfitActual = n(prevData.profit_actual) || n(prevData.profit_forecast);
 
-  const safeSum = (arr: any[], key: string) => arr.reduce((acc, cur) => acc + (Number(cur[key]) || 0), 0);
+  // 当月 (予測ベース)
+  const thisSalesBudget = n(thisData.sales_budget);
+  const thisSalesTarget = n(thisData.sales_target);
+  const thisSalesForecast = n(thisData.sales_forecast); // 当月は予測を使用
+  const thisSalesBudgetDiff = thisSalesBudget ? (thisSalesForecast / thisSalesBudget) * 100 : 0;
+  const thisSalesTargetDiff = thisSalesTarget ? (thisSalesForecast / thisSalesTarget) * 100 : 0;
 
-  const qBudget = safeSum(quarterData, 'sales_budget');
-  const qTarget = safeSum(quarterData, 'sales_target');
-  const qForecast = safeSum(quarterData, 'sales_forecast');
-  const qBudgetAchieve = qBudget ? (qForecast / qBudget) * 100 : 0;
-  const qTargetAchieve = qTarget ? (qForecast / qTarget) * 100 : 0;
+  const thisCostForecast = n(thisData.cost_forecast);
+  const thisProfitForecast = n(thisData.profit_forecast);
 
-  const hBudget = safeSum(halfData, 'sales_budget');
-  const hTarget = safeSum(halfData, 'sales_target');
-  const hForecast = safeSum(halfData, 'sales_forecast');
-  const hBudgetAchieve = hBudget ? (hForecast / hBudget) * 100 : 0;
-  const hTargetAchieve = hTarget ? (hForecast / hTarget) * 100 : 0;
-
-  const salesBudget = Number(currentData.sales_budget) || 0;
-  const salesTarget = Number(currentData.sales_target) || 0;
-  const salesActual = Number(currentData.sales_actual) || Number(currentData.sales_forecast) || 0;
-  const budgetAchieve = salesBudget ? (salesActual / salesBudget) * 100 : 0;
-  const targetAchieve = salesTarget ? (salesActual / salesTarget) * 100 : 0;
-
-  const costActualVal = Number(currentData.cost_actual) || Number(currentData.cost_forecast) || 0;
-  const profitActualVal = Number(currentData.profit_actual) || Number(currentData.profit_forecast) || 0;
-
-  const comparisonData = [
-    { name: '売上', budget: salesBudget, target: salesTarget, actual: salesActual },
-    { name: 'コスト', budget: Number(currentData.cost_budget) || 0, target: Number(currentData.cost_target) || 0, actual: costActualVal },
-    { name: '貢献利益', budget: Number(currentData.profit_budget) || 0, target: Number(currentData.profit_target) || 0, actual: profitActualVal },
+  // グラフ用データ (前月実績)
+  const prevChartData = [
+    { name: '売上', budget: prevSalesBudget, target: prevSalesTarget, actual: prevSalesActual },
+    { name: 'コスト', budget: n(prevData.cost_budget), target: n(prevData.cost_target), actual: prevCostActual },
+    { name: '貢献利益', budget: n(prevData.profit_budget), target: n(prevData.profit_target), actual: prevProfitActual },
   ];
 
-  const summaryTableData = [
-    { name: '売上', budget: salesBudget, target: salesTarget, actual: salesActual },
-    { name: 'コスト', budget: Number(currentData.cost_budget) || 0, target: Number(currentData.cost_target) || 0, actual: costActualVal },
-    { name: '貢献利益', budget: Number(currentData.profit_budget) || 0, target: Number(currentData.profit_target) || 0, actual: profitActualVal },
+  // テーブル用データ (前月)
+  const prevTableData = [
+    { name: '売上', budget: prevSalesBudget, target: prevSalesTarget, result: prevSalesActual },
+    { name: 'コスト', budget: n(prevData.cost_budget), target: n(prevData.cost_target), result: prevCostActual },
+    { name: '貢献利益', budget: n(prevData.profit_budget), target: n(prevData.profit_target), result: prevProfitActual },
+  ];
+
+  // テーブル用データ (当月)
+  const thisTableData = [
+    { name: '売上', budget: thisSalesBudget, target: thisSalesTarget, result: thisSalesForecast },
+    { name: 'コスト', budget: n(thisData.cost_budget), target: n(thisData.cost_target), result: thisCostForecast },
+    { name: '貢献利益', budget: n(thisData.profit_budget), target: n(thisData.profit_target), result: thisProfitForecast },
   ];
 
   return (
     <div className="space-y-8">
+      {/* 1. 棒グラフ (前月実績) */}
       <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
+        <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <Activity size={20} className="text-indigo-600" />
+            [前月実績] ({prevData.month})
+        </h3>
         <div className="flex justify-center mb-6">
             <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2"><div className="w-3 h-3 bg-rose-400 rounded-sm"></div><span className="text-sm text-slate-600 font-bold">予算</span></div>
@@ -390,7 +413,7 @@ const OverviewTab = ({ data, currentData, monthIndex }: any) => {
         </div>
         <div className="h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={comparisonData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <BarChart data={prevChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis dataKey="name" tick={{fontSize: 14, fontWeight: 'bold', fill: '#334155'}} />
               <YAxis tickFormatter={(value) => `¥${(value/1000).toLocaleString()}k`} tick={{fontSize: 12, fill: '#64748b'}} />
@@ -409,9 +432,10 @@ const OverviewTab = ({ data, currentData, monthIndex }: any) => {
         </div>
       </div>
 
+      {/* 2. 前月サマリー詳細 */}
       <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
         <h2 className="text-xl font-bold text-slate-800 mb-4 border-l-4 border-indigo-500 pl-3">
-            前月 ({currentData.month}) サマリー詳細
+            [前月サマリー詳細] ({prevData.month})
         </h2>
         <div className="overflow-x-auto">
             <table className="w-full text-right min-w-[600px]">
@@ -426,15 +450,52 @@ const OverviewTab = ({ data, currentData, monthIndex }: any) => {
                     </tr>
                 </thead>
                 <tbody>
-                    {summaryTableData.map((row) => {
-                        const vsBudget = row.budget ? (row.actual / row.budget) * 100 : 0;
-                        const vsTarget = row.target ? (row.actual / row.target) * 100 : 0;
+                    {prevTableData.map((row) => {
+                        const vsBudget = row.budget ? (row.result / row.budget) * 100 : 0;
+                        const vsTarget = row.target ? (row.result / row.target) * 100 : 0;
                         return (
                             <tr key={row.name} className="text-slate-800 border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
                                 <td className="py-4 px-4 text-left font-bold">{row.name}</td>
                                 <td className="py-4 px-4">{row.budget.toLocaleString()}</td>
                                 <td className="py-4 px-4">{row.target.toLocaleString()}</td>
-                                <td className="py-4 px-4 font-bold text-lg">{row.actual.toLocaleString()}</td>
+                                <td className="py-4 px-4 font-bold text-lg">{row.result.toLocaleString()}</td>
+                                <td className="py-4 px-4 font-bold text-rose-600">{formatPercent(vsBudget)}</td>
+                                <td className="py-4 px-4 font-bold text-amber-600">{formatPercent(vsTarget)}</td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </div>
+      </div>
+
+      {/* 3. 当月サマリー詳細 (追加) */}
+      <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
+        <h2 className="text-xl font-bold text-slate-800 mb-4 border-l-4 border-emerald-500 pl-3">
+            [当月サマリー詳細] ({thisData.month} 予測)
+        </h2>
+        <div className="overflow-x-auto">
+            <table className="w-full text-right min-w-[600px]">
+                <thead>
+                    <tr className="text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200 bg-slate-50">
+                        <th className="py-3 px-4 text-left">項目</th>
+                        <th className="py-3 px-4">予算</th>
+                        <th className="py-3 px-4">目標 (Target)</th>
+                        <th className="py-3 px-4 font-bold text-slate-700">予測 (Forecast)</th>
+                        <th className="py-3 px-4 text-rose-600">対予算比</th>
+                        <th className="py-3 px-4 text-amber-600">対目標比</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {thisTableData.map((row) => {
+                        const vsBudget = row.budget ? (row.result / row.budget) * 100 : 0;
+                        const vsTarget = row.target ? (row.result / row.target) * 100 : 0;
+                        return (
+                            <tr key={row.name} className="text-slate-800 border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                                <td className="py-4 px-4 text-left font-bold">{row.name}</td>
+                                <td className="py-4 px-4">{row.budget.toLocaleString()}</td>
+                                <td className="py-4 px-4">{row.target.toLocaleString()}</td>
+                                <td className="py-4 px-4 font-bold text-lg">{row.result.toLocaleString()}</td>
                                 <td className="py-4 px-4 font-bold text-rose-600">{formatPercent(vsBudget)}</td>
                                 <td className="py-4 px-4 font-bold text-amber-600">{formatPercent(vsTarget)}</td>
                             </tr>
@@ -483,48 +544,17 @@ const OverviewTab = ({ data, currentData, monthIndex }: any) => {
                       <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
                           <p className="text-xs text-slate-500 mb-1">当月着地見込</p>
                           <div className="flex items-end justify-between mb-2">
-                              <span className="text-2xl font-bold text-slate-800">{formatCurrency(salesActual)}</span>
+                              <span className="text-2xl font-bold text-slate-800">{formatCurrency(thisSalesForecast)}</span>
                           </div>
                           <div className="flex gap-2 text-[10px]">
-                              <span className={`px-2 py-0.5 rounded-full font-bold ${budgetAchieve >= 100 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                                  予算比 {formatPercent(budgetAchieve)}
+                              <span className={`px-2 py-0.5 rounded-full font-bold ${thisSalesBudgetDiff >= 100 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                                  予算比 {formatPercent(thisSalesBudgetDiff)}
                               </span>
-                              <span className={`px-2 py-0.5 rounded-full font-bold border ${targetAchieve >= 100 ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-white text-slate-500 border-slate-200'}`}>
-                                  目標比 {formatPercent(targetAchieve)}
+                              <span className={`px-2 py-0.5 rounded-full font-bold border ${thisSalesTargetDiff >= 100 ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-white text-slate-500 border-slate-200'}`}>
+                                  目標比 {formatPercent(thisSalesTargetDiff)}
                               </span>
                           </div>
                       </div>
-
-                      <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-100">
-                          <p className="text-xs text-indigo-800 mb-1 font-bold">四半期予測合計</p>
-                          <div className="flex items-end justify-between mb-2">
-                              <span className="text-2xl font-bold text-slate-800">{formatCurrency(qForecast)}</span>
-                          </div>
-                          <div className="flex gap-2 text-[10px]">
-                              <span className={`px-2 py-0.5 rounded-full font-bold bg-white border ${qBudgetAchieve >= 100 ? 'text-indigo-700 border-indigo-200' : 'text-rose-700 border-rose-200'}`}>
-                                  予算比 {formatPercent(qBudgetAchieve)}
-                              </span>
-                              <span className="px-2 py-0.5 rounded-full bg-indigo-200 text-indigo-800 font-bold border border-indigo-300">
-                                  目標比 {formatPercent(qTargetAchieve)}
-                              </span>
-                          </div>
-                      </div>
-                      
-                      <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
-                          <p className="text-xs text-amber-800 mb-1 font-bold">半期予測合計</p>
-                          <div className="flex items-end justify-between mb-2">
-                              <span className="text-2xl font-bold text-slate-800">{formatCurrency(hForecast)}</span>
-                          </div>
-                          <div className="flex gap-2 text-[10px]">
-                              <span className="px-2 py-0.5 rounded-full bg-white text-slate-600 font-bold border border-slate-200">
-                                  予算比 {formatPercent(hBudgetAchieve)}
-                              </span>
-                              <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-800 font-bold border border-amber-300">
-                                  目標比 {formatPercent(hTargetAchieve)}
-                              </span>
-                          </div>
-                      </div>
-
                     </div>
                   </div>
                 </div>
@@ -534,20 +564,17 @@ const OverviewTab = ({ data, currentData, monthIndex }: any) => {
   );
 };
 
-// --- Sales Analysis Tab ---
+// --- Sales Analysis Tab (修正：ダミーデータ適用・表示制限) ---
 const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: NewSalesRecord[], existingSalesData: ExistingSalesRecord[] }) => {
   const [subTab, setSubTab] = useState<'new' | 'existing'>('new');
 
   // Hardcoded Lists
   const dealList = [
-    { date: '2024/09/25', client: '株式会社A商事', segment: 'Enterprise', amount: 1500, id_count: 50, duration: '12ヶ月', owner: '佐藤' },
-    { date: '2024/09/20', client: 'Bテック株式会社', segment: 'Mid', amount: 400, id_count: 20, duration: '12ヶ月', owner: '田中' },
-    { date: '2024/09/18', client: 'Cソリューションズ', segment: 'Mid', amount: 350, id_count: 15, duration: '6ヶ月', owner: '田中' },
-    { date: '2024/09/15', client: 'D物流', segment: 'Small', amount: 50, id_count: 5, duration: '1ヶ月', owner: '鈴木' },
-    { date: '2024/09/10', client: 'E不動産', segment: 'Enterprise', amount: 1200, id_count: 40, duration: '12ヶ月', owner: '佐藤' },
-    { date: '2024/09/05', client: 'Fサービス', segment: 'Mid', amount: 600, id_count: 30, duration: '12ヶ月', owner: '田中' },
-    { date: '2024/09/02', client: 'G商会', segment: 'Small', amount: 100, id_count: 10, duration: '12ヶ月', owner: '鈴木' },
-    { date: '2024/08/28', client: 'H工業', segment: 'Enterprise', amount: 2000, id_count: 80, duration: '24ヶ月', owner: '佐藤' },
+    { date: '2024/09/25', client: '株式会社A商事', segment: 'Enterprise', product: 'Premium Plan', amount: 1500, owner: '佐藤' },
+    { date: '2024/09/20', client: 'Bテック株式会社', segment: 'Mid', product: 'Standard Plan', amount: 400, owner: '田中' },
+    { date: '2024/09/18', client: 'Cソリューションズ', segment: 'Mid', product: 'Standard Plan', amount: 350, owner: '田中' },
+    { date: '2024/09/15', client: 'D物流', segment: 'Small', product: 'Lite Plan', amount: 50, owner: '鈴木' },
+    { date: '2024/09/10', client: 'E不動産', segment: 'Enterprise', product: 'Premium Plan', amount: 1200, owner: '佐藤' },
   ];
 
   const fluctuationList = [
@@ -588,13 +615,15 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
     );
   };
 
+  // 表示用データのフィルタリング (Enterprise, Mid, Smallのみ)
+  const displayData = newSalesData.filter(d => ['Enterprise', 'Mid', 'Small'].includes(d.segment));
+
   // 新規売上のグラフ用データ生成
-  const graphData = newSalesData.map(d => ({
+  const graphData = displayData.map(d => ({
     segment: d.segment,
     budget: Number(d.budget) || 0,
     target: Number(d.target) || 0,
     actual: Number(d.actual) || 0,
-    // 達成率や前年比 (右軸用)
     budget_achiev: d.budget ? ((Number(d.actual) / Number(d.budget)) * 100).toFixed(1) : 0,
     target_achiev: d.target ? ((Number(d.actual) / Number(d.target)) * 100).toFixed(1) : 0,
     yoy: d.last_year ? ((Number(d.actual) / Number(d.last_year)) * 100).toFixed(1) : 0,
@@ -670,7 +699,7 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {newSalesData.map((row) => (
+                {displayData.map((row) => (
                   <tr key={row.segment} className="hover:bg-slate-50">
                     <td className="p-3 text-left font-bold">{row.segment}</td>
                     <td className="p-3 font-bold text-indigo-600">{Number(row.actual).toLocaleString()}</td>
@@ -711,7 +740,7 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
                         <td className="p-3 font-bold text-slate-800">{d.client}</td>
                         <td className="p-3"><span className="px-2 py-0.5 bg-slate-100 rounded text-xs">{d.segment}</span></td>
                         <td className="p-3 text-right font-medium">{d.amount.toLocaleString()}</td>
-                        <td className="p-3 text-right">{d.id_count}</td>
+                        <td className="p-3 text-right">{d.id_count}</td> // ここ修正
                         <td className="p-3">{d.duration}</td>
                         <td className="p-3">{d.owner}</td>
                       </tr>
