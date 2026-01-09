@@ -1,6 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { 
+  useState, 
+  useEffect 
+} from 'react';
+
 import {
   LineChart,
   Line,
@@ -23,6 +27,7 @@ import {
   FunnelChart,
   LabelList as FunnelLabelList
 } from 'recharts';
+
 import {
   LayoutDashboard,
   TrendingUp,
@@ -115,7 +120,6 @@ type OkrRecord = {
 };
 
 // 汎用リスト (Listsシート用)
-// category列で「新規案件」「既存更新」「パイプライン」「顧問案件」などを識別します
 type ListRecord = {
   category: string;
   date: string;
@@ -126,12 +130,12 @@ type ListRecord = {
   owner: string;
   status: string;
   memo: string;
-  extra1: string; // 予備カラム（確度や変動理由など）
+  extra1: string;
 };
 
 // マーケティングデータ (Marketingシート用)
 type MarketingRecord = {
-  type: string; // Source, Campaign, Funnel など
+  type: string;
   label: string;
   val1: number;
   val2: number;
@@ -142,23 +146,23 @@ type MarketingRecord = {
 
 // パイプライン集計データ (Pipeline_Aggシート用)
 type PipelineRecord = {
-  type: string; // Count_Commit, Amount など
+  type: string;
   segment: string;
-  m1: number; // 1月
-  m2: number; // 2月
-  m3: number; // 3月
-  m4: number; // 4月
-  m5: number; // 5月
-  m6: number; // 6月
+  m1: number;
+  m2: number;
+  m3: number;
+  m4: number;
+  m5: number;
+  m6: number;
 };
 
 // その他売上データ (Otherシート用)
 type OtherRecord = {
-  type: string; // Segment, Partner
+  type: string;
   name: string;
-  val1: number; // 予算など
-  val2: number; // 目標など
-  val3: number; // 実績など
+  val1: number;
+  val2: number;
+  val3: number;
 };
 
 // 顧問CPAデータ (Advisor_CPAシート用)
@@ -172,7 +176,7 @@ type AdvisorRecord = {
   revenue: number;
 };
 
-// アプリケーション設定 (シート連携管理用)
+// アプリケーション設定
 type SheetConfig = {
   id: string;
   name: string;
@@ -196,14 +200,14 @@ type AppSettings = {
 // ==========================================
 
 const COLORS = [
-  '#6366f1', // Indigo
-  '#10b981', // Emerald
-  '#f59e0b', // Amber
-  '#ef4444', // Red
-  '#8b5cf6', // Violet
-  '#82ca9d', // Green (Recharts default)
-  '#ffc658', // Yellow (Recharts default)
-  '#8884d8'  // Purple (Recharts default)
+  '#6366f1',
+  '#10b981',
+  '#f59e0b',
+  '#ef4444',
+  '#8b5cf6',
+  '#82ca9d',
+  '#ffc658',
+  '#8884d8'
 ];
 
 const PIE_COLORS = { 
@@ -211,7 +215,7 @@ const PIE_COLORS = {
   off: '#e2e8f0' 
 };
 
-// 設定の初期値
+// 初期設定
 const INITIAL_SETTINGS: AppSettings = {
   overview: { 
     id: '', 
@@ -257,8 +261,8 @@ const INITIAL_SETTINGS: AppSettings = {
   },
 };
 
-// モックデータ: 売上 (データ未連携時のプレースホルダー)
-const INITIAL_SALES_DATA: SalesRecord[] = [
+// [Mock] Main Data (Expand to assure lines)
+const MOCK_SALES_DATA: SalesRecord[] = [
   { 
     month: '4月', 
     sales_budget: 12000, 
@@ -441,7 +445,8 @@ const INITIAL_SALES_DATA: SalesRecord[] = [
   },
 ];
 
-const MOCK_NEW_SALES_DATA: NewSalesRecord[] = [
+// [Mock] New Sales KPI
+const MOCK_NEW_DATA: NewSalesRecord[] = [
   { 
     segment: 'Enterprise', 
     budget: 5000, 
@@ -483,7 +488,8 @@ const MOCK_NEW_SALES_DATA: NewSalesRecord[] = [
   },
 ];
 
-const INITIAL_EXISTING_SALES: ExistingSalesRecord[] = [
+// [Mock] Existing Sales KPI
+const MOCK_EXISTING_DATA: ExistingSalesRecord[] = [
   { 
     segment: 'Enterprise', 
     sales: 12134547, 
@@ -507,19 +513,168 @@ const INITIAL_EXISTING_SALES: ExistingSalesRecord[] = [
   },
 ];
 
-const INITIAL_OKR_DATA: OkrRecord[] = [
+// [Mock] List Data
+const MOCK_LIST_DATA: ListRecord[] = [
   { 
-    key_result: "635件", 
-    jan: "", feb: "", mar: "", apr: "", may: "", jun: "" 
+    category: 'NewDeal', 
+    date: '2025/01/10', 
+    name: 'Fの杜', 
+    segment: 'Enterprise', 
+    amount: 2200, 
+    count: 80, 
+    owner: '佐藤', 
+    status: '受注', 
+    memo: 'Web完結プラン', 
+    extra1: '' 
   },
   { 
-    key_result: "160件", 
-    jan: "", feb: "", mar: "", apr: "", may: "", jun: "" 
+    category: 'NewDeal', 
+    date: '2025/01/08', 
+    name: 'G建設', 
+    segment: 'Mid', 
+    amount: 550, 
+    count: 25, 
+    owner: '田中', 
+    status: '受注', 
+    memo: '', 
+    extra1: '' 
   },
   { 
-    key_result: "6社/150%", 
-    jan: "", feb: "", mar: "", apr: "", may: "", jun: "" 
+    category: 'Renewed', 
+    date: '', 
+    name: 'アルファ工業', 
+    segment: 'Enterprise', 
+    amount: 1200, 
+    count: 60, 
+    owner: '', 
+    status: '', 
+    memo: '12ヶ月更新', 
+    extra1: '' 
   },
+  { 
+    category: 'NotRenewed', 
+    date: '', 
+    name: 'Zマート', 
+    segment: 'Small', 
+    amount: 100, 
+    count: 5, 
+    owner: '鈴木', 
+    status: '', 
+    memo: '価格面で折り合わず', 
+    extra1: '' 
+  },
+  { 
+    category: 'Fluctuation', 
+    date: '', 
+    name: 'Xホールディングス', 
+    segment: 'Enterprise', 
+    amount: 2500, 
+    count: 120, 
+    owner: '', 
+    status: '', 
+    memo: '部署拡大', 
+    extra1: '+25%' 
+  },
+  { 
+    category: 'HighValue', 
+    date: '', 
+    name: 'イノベーション', 
+    segment: 'Enterprise', 
+    amount: 4500, 
+    count: 300, 
+    owner: '', 
+    status: '', 
+    memo: '2023/04/01開始', 
+    extra1: '' 
+  },
+  { 
+    category: 'AdvisorDeal', 
+    date: '', 
+    name: '株式会社アルファ', 
+    segment: 'Enterprise', 
+    amount: 0, 
+    count: 0, 
+    owner: '山田 本部長', 
+    status: '提案中', 
+    memo: '予算感合意', 
+    extra1: '' 
+  },
+  { 
+    category: 'Trial', 
+    date: '2025/12/22', 
+    name: '新浦安ホテル', 
+    segment: 'Mid', 
+    amount: 500000, 
+    count: 0, 
+    owner: '', 
+    status: '', 
+    memo: 'トライアル中', 
+    extra1: '終了日未定' 
+  },
+  { 
+    category: 'PipelineNew', 
+    date: '2026-02', 
+    name: 'マニー株式会社', 
+    segment: 'Mid', 
+    amount: 4950000, 
+    count: 0, 
+    owner: '', 
+    status: '', 
+    memo: '', 
+    extra1: 'Challenge-' 
+  },
+  { 
+    category: 'PipelineExist', 
+    date: '2026-01', 
+    name: '東急リゾーツ', 
+    segment: 'Enterprise', 
+    amount: 3510000, 
+    count: 0, 
+    owner: '', 
+    status: '', 
+    memo: '', 
+    extra1: 'Challenge+' 
+  },
+];
+
+// [Mock] OKR Data
+const MOCK_OKR_DATA: OkrRecord[] = [
+  { key_result: "635件", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+  { key_result: "160件", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+  { key_result: "6社/150%", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+  { key_result: "30%削減", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+  { key_result: "オンボーディング標準化", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+  { key_result: "3KPI/10%改善", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+  { key_result: "競合調査", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+  { key_result: "勝率80%", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+  { key_result: "サイト改修/10件", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+];
+
+// [Mock] Marketing Data
+const MOCK_MARKETING_DATA: MarketingRecord[] = [
+  { type: 'Source', label: 'Web (Inbound)', val1: 2500, val2: 400, val3: 80, val4: 5000000, val5: 0 },
+  { type: 'Source', label: 'Event', val1: 1200, val2: 150, val3: 30, val4: 8000000, val5: 0 },
+  { type: 'Campaign', label: '[EV] HR Momentum', val1: 99, val2: 46, val3: 72, val4: 0, val5: 0 },
+  { type: 'Funnel_Month', label: 'リード獲得', val1: 200, val2: 400, val3: 600, val4: 0, val5: 0 },
+  { type: 'Funnel_Month', label: '商談化', val1: 80, val2: 150, val3: 220, val4: 0, val5: 0 },
+];
+
+// [Mock] Pipeline Data
+const MOCK_PIPELINE_DATA: PipelineRecord[] = [
+  { type: 'Amount', segment: 'Enterprise', m1: 16289417, m2: 11874840, m3: 11849760, m4: 50826379, m5: 10098414, m6: 18688880 },
+  { type: 'Amount', segment: 'Mid', m1: 15735600, m2: 8430892, m3: 3949990, m4: 16900000, m5: 1621000, m6: 1924000 },
+];
+
+// [Mock] Other Data
+const MOCK_OTHER_DATA: OtherRecord[] = [
+  { type: 'Segment', name: '企業代理店', val1: 1000, val2: 0, val3: 1100 },
+  { type: 'Partner', name: 'Partner A', val1: 1200, val2: 0, val3: 0 },
+];
+
+// [Mock] Advisor Data
+const MOCK_ADVISOR_DATA: AdvisorRecord[] = [
+  { source: 'Advisor A', cost: 500000, referrals: 10, lost: 4, ongoing: 4, won: 2, revenue: 3000000 },
+  { source: 'Advisor B', cost: 300000, referrals: 5, lost: 2, ongoing: 2, won: 1, revenue: 1500000 },
 ];
 
 // ==========================================
@@ -530,7 +685,6 @@ const parseCSV = (csvText: string): any[] => {
   const cleanText = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
   const lines = cleanText.split('\n');
   const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-  
   return lines.slice(1).map(line => {
     if (!line.trim()) return null;
     const values = line.split(',');
@@ -747,24 +901,23 @@ const AchievementBadge = ({ label, value }: { label: string, value: number }) =>
 // ==========================================
 
 export default function CBDashboard() {
-  // --- States ---
-  const [activeTab, setActiveTab] = useState('settings');
+  const [activeTab, setActiveTab] = useState('overview');
   const [settings, setSettings] = useState<AppSettings>(INITIAL_SETTINGS);
   
-  // Data States
-  const [salesData, setSalesData] = useState<SalesRecord[]>(INITIAL_SALES_DATA);
-  const [newSalesData, setNewSalesData] = useState<NewSalesRecord[]>([]);
-  const [existingSalesData, setExistingSalesData] = useState<ExistingSalesRecord[]>([]);
-  const [okrData, setOkrData] = useState<OkrRecord[]>(INITIAL_OKR_DATA);
-  const [marketingData, setMarketingData] = useState<MarketingRecord[]>([]);
-  const [pipelineData, setPipelineData] = useState<PipelineRecord[]>([]);
-  const [otherData, setOtherData] = useState<OtherRecord[]>([]);
-  const [advisorData, setAdvisorData] = useState<AdvisorRecord[]>([]);
+  // Data States (initialized with MOCK DATA)
+  const [salesData, setSalesData] = useState<SalesRecord[]>(MOCK_SALES_DATA);
+  const [newSalesData, setNewSalesData] = useState<NewSalesRecord[]>(MOCK_NEW_DATA);
+  const [existingSalesData, setExistingSalesData] = useState<ExistingSalesRecord[]>(MOCK_EXISTING_DATA);
+  const [okrData, setOkrData] = useState<OkrRecord[]>(MOCK_OKR_DATA);
+  const [marketingData, setMarketingData] = useState<MarketingRecord[]>(MOCK_MARKETING_DATA);
+  const [pipelineData, setPipelineData] = useState<PipelineRecord[]>(MOCK_PIPELINE_DATA);
+  const [otherData, setOtherData] = useState<OtherRecord[]>(MOCK_OTHER_DATA);
+  const [advisorData, setAdvisorData] = useState<AdvisorRecord[]>(MOCK_ADVISOR_DATA);
   
-  // List Data States
-  const [salesListData, setSalesListData] = useState<ListRecord[]>([]);
-  const [negListData, setNegListData] = useState<ListRecord[]>([]);
-  const [pipeListData, setPipeListData] = useState<ListRecord[]>([]);
+  // List Data States (initialized with MOCK LIST DATA)
+  const [salesListData, setSalesListData] = useState<ListRecord[]>(MOCK_LIST_DATA);
+  const [negListData, setNegListData] = useState<ListRecord[]>(MOCK_LIST_DATA);
+  const [pipeListData, setPipeListData] = useState<ListRecord[]>(MOCK_LIST_DATA);
 
   // Input States
   const [sheetInput, setSheetInput] = useState('');
@@ -773,7 +926,7 @@ export default function CBDashboard() {
   const [errorMessage, setErrorMessage] = useState('');
   const [fileName, setFileName] = useState('');
 
-  // --- Effects ---
+  // Effects
   useEffect(() => {
     const savedSettings = localStorage.getItem('cb_dashboard_settings');
     if (savedSettings) {
@@ -785,7 +938,7 @@ export default function CBDashboard() {
     }
   }, []);
 
-  // --- Handlers ---
+  // Handlers
   const saveSettings = () => {
     localStorage.setItem('cb_dashboard_settings', JSON.stringify(settings));
     alert('設定を保存しました。');
@@ -1451,7 +1604,7 @@ const OtherSalesTab = ({ otherData }: { otherData: OtherRecord[] }) => {
                            cx="50%" 
                            cy="50%" 
                            outerRadius={80}
-                           label={({name, percent}: any) => `${name} ${(percent * 100).toFixed(0)}%`}
+                           label={({name, percent}: any) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                         >
                            {partners.map((entry, index) => (
                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
