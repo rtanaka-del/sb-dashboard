@@ -198,13 +198,11 @@ export default function CBDashboard() {
   const [salesData, setSalesData] = useState<SalesRecord[]>(INITIAL_SALES_DATA);
   const [newSalesData, setNewSalesData] = useState<NewSalesRecord[]>(MOCK_NEW_SALES_DATA);
   const [existingSalesData, setExistingSalesData] = useState<ExistingSalesRecord[]>(INITIAL_EXISTING_SALES);
-
   const [sheetInput, setSheetInput] = useState('1UijNvely71JDu73oBoBpho9P84fT-yPmNH2QVVstwO4'); 
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [fileName, setFileName] = useState('');
-  
   const [prevMonthName, setPrevMonthName] = useState<string>('');
   const [thisMonthName, setThisMonthName] = useState<string>('');
   const [currentMonthIndex, setCurrentMonthIndex] = useState<number>(0);
@@ -261,7 +259,7 @@ export default function CBDashboard() {
       <aside className="w-72 bg-slate-900 text-white flex flex-col shadow-xl z-20 overflow-y-auto">
         <div className="p-6 border-b border-slate-700">
           <div className="flex items-center gap-2 font-bold text-xl tracking-tight"><div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div><span>Corporate Div.</span></div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.12</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.13</p>
         </div>
         <nav className="flex-1 py-6 px-3 space-y-1">
           <NavItem id="overview" label="サマリー / 予実" icon={<LayoutDashboard size={20} />} activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -351,6 +349,13 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
   const totalSales = existingSalesData.reduce((a, b) => a + Number(b.sales), 0);
   const totalData = { sales: totalSales, nrr: existingSalesData.reduce((a, b) => a + Number(b.nrr), 0)/3, renewal: existingSalesData.reduce((a, b) => a + Number(b.renewal), 0)/3, id_growth: existingSalesData.reduce((a, b) => a + Number(b.id_growth), 0)/3 };
   const totalAnnualData = { sales: fy25AnnualExisting.reduce((a, b) => a + b.sales, 0), nrr: fy25AnnualExisting.reduce((a, b) => a + b.nrr, 0)/3, renewal: fy25AnnualExisting.reduce((a, b) => a + b.renewal, 0)/3, id_growth: fy25AnnualExisting.reduce((a, b) => a + b.id_growth, 0)/3 };
+
+  const CircularRate = ({ label, value, color }: { label: string, value: number, color: string }) => {
+    const data = [{ name: 'Val', value: value }, { name: 'Rest', value: 100 - (value > 100 ? 0 : value) }];
+    return (<div className="flex flex-col items-center"><div className="w-16 h-16 relative"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={data} innerRadius={20} outerRadius={28} startAngle={90} endAngle={-270} dataKey="value" stroke="none"><Cell fill={color} /><Cell fill={PIE_COLORS.off} /></Pie></PieChart></ResponsiveContainer><div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-700">{value.toFixed(1)}%</div></div><span className="text-[10px] font-bold text-slate-600 mt-1">{label}</span></div>);
+  };
+  const SegmentCard = ({ title, data, colorClass, isAnnual = false }: any) => (<div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm flex flex-col h-full bg-white"><div className={`${colorClass} text-white py-2 text-center font-bold text-sm uppercase`}>{title} {isAnnual ? '(FY25通年)' : ''}</div><div className="p-4 flex flex-col items-center justify-between flex-1"><div className="text-center mb-4"><p className="text-[10px] text-slate-500 font-bold mb-1">売上金額(円)</p><p className="text-xl font-extrabold text-slate-800">{Number(data.sales).toLocaleString()}</p></div><div className="flex justify-between w-full px-1"><CircularRate label="NRR" value={Number(data.nrr)} color="#10b981" /><CircularRate label="更新率" value={Number(data.renewal)} color="#3b82f6" /><CircularRate label="ID増減" value={Number(data.id_growth)} color="#f59e0b" /></div></div></div>);
+  const GaugeChart = ({ title, budget, target, actual }: any) => { const budRate = budget ? Math.min((actual / budget) * 100, 100) : 0; const tarRate = target ? Math.min((actual / target) * 100, 100) : 0; return (<div className="flex flex-col items-center p-4 bg-white border border-slate-100 rounded-lg"><h4 className="text-sm font-bold text-slate-700 mb-2">{title}</h4><div className="w-full space-y-2"><div><div className="flex justify-between text-[10px] text-slate-500 mb-0.5"><span>予算比</span><span>{budget ? Math.round((actual/budget)*100) : 0}%</span></div><div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden"><div className="bg-blue-500 h-2 rounded-full" style={{ width: `${budRate}%` }}></div></div></div><div><div className="flex justify-between text-[10px] text-slate-500 mb-0.5"><span>目標比</span><span>{target ? Math.round((actual/target)*100) : 0}%</span></div><div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden"><div className="bg-amber-500 h-2 rounded-full" style={{ width: `${tarRate}%` }}></div></div></div></div><div className="mt-2 text-center"><span className="text-lg font-bold text-slate-800">{actual.toLocaleString()}</span><span className="text-[10px] text-slate-400 ml-1">/ Target: {target.toLocaleString()}</span></div></div>); };
 
   return (
     <div className="space-y-6">
