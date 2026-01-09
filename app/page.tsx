@@ -96,6 +96,7 @@ const parseCSV = (csvText: string): any[] => {
   const cleanText = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
   const lines = cleanText.split('\n');
   const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+  
   return lines.slice(1).map(line => {
     if (!line.trim()) return null;
     const values = line.split(',');
@@ -218,7 +219,7 @@ export default function CBDashboard() {
 
   useEffect(() => {
     setIsClient(true);
-    const mIndex = 5; // 9月基準
+    const mIndex = 5; 
     const months = ['4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月', '1月', '2月', '3月'];
     setThisMonthName(months[mIndex]);
     setPrevMonthName(months[mIndex - 1] || months[11]);
@@ -228,19 +229,29 @@ export default function CBDashboard() {
 
   const handleSheetSync = async () => {
     if (!sheetInput) return;
-    setIsSyncing(true); setSyncStatus('idle'); setErrorMessage('');
+    setIsSyncing(true);
+    setSyncStatus('idle');
+    setErrorMessage('');
     try {
       const idMatch = sheetInput.match(/\/d\/([a-zA-Z0-9-_]+)/);
       const cleanId = idMatch ? idMatch[1] : sheetInput;
-      const requests = ['Main', 'New', 'Existing'].map(sheetName => fetch(`https://docs.google.com/spreadsheets/d/${cleanId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`).then(res => res.text()));
+      const requests = ['Main', 'New', 'Existing'].map(sheetName => 
+        fetch(`https://docs.google.com/spreadsheets/d/${cleanId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`)
+          .then(res => res.text())
+      );
       const results = await Promise.all(requests);
       const mainData = parseCSV(results[0]); if (mainData.length > 0) setSalesData(mainData);
       const newData = parseCSV(results[1]); if (newData.length > 0 && newData[0].segment) setNewSalesData(newData);
       const existData = parseCSV(results[2]); if (existData.length > 0) setExistingSalesData(existData);
-      setSyncStatus('success'); setFileName(`All Sheets Synced`); setTimeout(() => setSyncStatus('idle'), 3000);
+      setSyncStatus('success');
+      setFileName(`All Sheets Synced`);
+      setTimeout(() => setSyncStatus('idle'), 3000);
     } catch (error: any) {
-      setSyncStatus('error'); setErrorMessage('シート読込失敗: ' + error.message);
-    } finally { setIsSyncing(false); }
+      setSyncStatus('error');
+      setErrorMessage('シート読込失敗: ' + error.message);
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const prevMonthData = prevMonthName ? (salesData.find(d => d.month === prevMonthName) || salesData[0]) : salesData[0];
@@ -264,7 +275,10 @@ export default function CBDashboard() {
     <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
       <aside className="w-72 bg-slate-900 text-white flex flex-col shadow-xl z-20 overflow-y-auto">
         <div className="p-6 border-b border-slate-700">
-          <div className="flex items-center gap-2 font-bold text-xl tracking-tight"><div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div><span>Corporate Div.</span></div>
+          <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
+            <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
+            <span>Corporate Div.</span>
+          </div>
           <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.09</p>
         </div>
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -278,11 +292,15 @@ export default function CBDashboard() {
         <div className="p-4 border-t border-slate-700 bg-slate-800/50">
           <div className="bg-slate-800 rounded-lg p-4 shadow-inner border border-slate-700 space-y-4">
             <div>
-              <div className="flex items-center justify-between mb-2"><p className="text-xs text-indigo-300 font-bold flex items-center gap-1"><LinkIcon size={12} /> Google Sheets 連携</p>{syncStatus === 'success' && <CheckCircle size={14} className="text-emerald-400" />}</div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-indigo-300 font-bold flex items-center gap-1"><LinkIcon size={12} /> Google Sheets 連携</p>
+                {syncStatus === 'success' && <CheckCircle size={14} className="text-emerald-400" />}
+              </div>
               <div className="space-y-2">
                 <input type="text" placeholder="標準ID" value={sheetInput} onChange={(e) => setSheetInput(e.target.value)} className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
                 <button onClick={handleSheetSync} disabled={isSyncing || !sheetInput} className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium rounded transition-all ${isSyncing ? 'bg-slate-700 text-slate-400 cursor-wait' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-900/20'}`}><RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />{isSyncing ? 'データ同期' : 'データ同期'}</button>
               </div>
+              <div className="mt-2 flex items-start gap-1 text-[10px] text-slate-400"><Info size={12} className="mt-0.5 shrink-0" /><p>3つのシート(Main, New, Existing)を読込中</p></div>
             </div>
             {fileName && syncStatus === 'success' && (<div className="mt-2 p-2 bg-emerald-900/30 border border-emerald-800/50 rounded text-[10px] text-emerald-300 truncate">{fileName}</div>)}
             {syncStatus === 'error' && (<div className="mt-2 p-2 bg-rose-900/30 border border-rose-800/50 rounded text-[10px] text-rose-300 leading-tight">⚠ {errorMessage}</div>)}
@@ -291,8 +309,20 @@ export default function CBDashboard() {
       </aside>
       <main className="flex-1 overflow-y-auto relative">
         <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10 px-8 py-4 flex justify-between items-center border-b border-slate-200">
-          <div><h1 className="text-2xl font-bold text-slate-800">{activeTab === 'overview' && '月次売上および今後の売上予測'}{activeTab === 'sales' && '企業直販売上分 (新規/既存)'}{activeTab === 'other' && 'その他売上分析 (代理店・優待・学校)'}{activeTab === 'process' && 'プロセス・要因分析'}{activeTab === 'negotiation' && '商談分析レポート'}{activeTab === 'future' && '未来予測とアクションプラン'}</h1></div>
-          <div className="flex items-center gap-4"><div className="text-right hidden md:block"><p className="text-sm font-medium">山田 太郎</p><p className="text-xs text-slate-500">法人事業部長</p></div><div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold border border-indigo-100">YT</div></div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">
+              {activeTab === 'overview' && '月次売上および今後の売上予測'}
+              {activeTab === 'sales' && '企業直販売上分 (新規/既存)'}
+              {activeTab === 'other' && 'その他売上分析 (代理店・優待・学校)'}
+              {activeTab === 'process' && 'プロセス・要因分析'}
+              {activeTab === 'negotiation' && '商談分析レポート'}
+              {activeTab === 'future' && '未来予測とアクションプラン'}
+            </h1>
+          </div>
+          <div className="flex items-center gap-4">
+             <div className="text-right hidden md:block"><p className="text-sm font-medium">山田 太郎</p><p className="text-xs text-slate-500">法人事業部長</p></div>
+             <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold border border-indigo-100">YT</div>
+          </div>
         </header>
         <div className="p-8 pb-20">{renderContent()}</div>
       </main>
@@ -312,10 +342,19 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
   const prevChartData = [{ name: '売上', budget: n(prevData.sales_budget), target: n(prevData.sales_target), actual: n(prevData.sales_actual) || n(prevData.sales_forecast) }, { name: 'コスト', budget: n(prevData.cost_budget), target: n(prevData.cost_target), actual: n(prevData.cost_actual) || n(prevData.cost_forecast) }, { name: '貢献利益', budget: n(prevData.profit_budget), target: n(prevData.profit_target), actual: n(prevData.profit_actual) || n(prevData.profit_forecast) }];
   const thisTableData = [{ name: '売上', budget: n(thisData.sales_budget), target: n(thisData.sales_target), result: n(thisData.sales_forecast) }, { name: 'コスト', budget: n(thisData.cost_budget), target: n(thisData.cost_target), result: n(thisData.cost_forecast) }, { name: '貢献利益', budget: n(thisData.profit_budget), target: n(thisData.profit_target), result: n(thisData.profit_forecast) }];
   const safeSum = (arr: any[], key: string) => arr.reduce((acc, cur) => acc + (Number(cur[key]) || 0), 0);
-  const quarterIdx = Math.floor(monthIndex / 3); const quarterStartIdx = quarterIdx * 3; const quarterData = data.slice(quarterStartIdx, quarterStartIdx + 3);
+  const quarterIdx = Math.floor(monthIndex / 3);
+  const quarterStartIdx = quarterIdx * 3;
   const qBudget = safeSum(quarterData, 'sales_budget'); const qTarget = safeSum(quarterData, 'sales_target'); const qForecast = safeSum(quarterData, 'sales_forecast');
   const hBudget = safeSum(data.slice(monthIndex < 6 ? 0 : 6, monthIndex < 6 ? 6 : 12), 'sales_budget'); const hTarget = safeSum(data.slice(monthIndex < 6 ? 0 : 6, monthIndex < 6 ? 6 : 12), 'sales_target'); const hForecast = safeSum(data.slice(monthIndex < 6 ? 0 : 6, monthIndex < 6 ? 6 : 12), 'sales_forecast');
   const yBudget = safeSum(data, 'sales_budget'); const yTarget = safeSum(data, 'sales_target'); const yForecast = safeSum(data, 'sales_forecast');
+
+  const AchievementBadge = ({ label, value }: { label: string, value: number }) => {
+    const isTarget = label.includes('目標');
+    const bgColor = isTarget ? (value >= 100 ? 'bg-amber-100' : 'bg-white') : (value >= 100 ? 'bg-emerald-100' : 'bg-rose-100');
+    const textColor = isTarget ? (value >= 100 ? 'text-amber-700' : 'text-slate-500') : (value >= 100 ? 'text-emerald-700' : 'text-rose-700');
+    const borderColor = isTarget ? (value >= 100 ? 'border-amber-200' : 'border-slate-200') : (value >= 100 ? 'border-emerald-200' : 'border-rose-200');
+    return (<span className={`px-2 py-0.5 rounded-full font-bold border ${bgColor} ${textColor} ${borderColor} text-[10px]`}>{label} {formatPercent(value)}</span>);
+  };
 
   return (
     <div className="space-y-8">
@@ -353,6 +392,13 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
   const totalSales = existingSalesData.reduce((a, b) => a + Number(b.sales), 0);
   const totalData = { sales: totalSales, nrr: existingSalesData.reduce((a, b) => a + Number(b.nrr), 0)/3, renewal: existingSalesData.reduce((a, b) => a + Number(b.renewal), 0)/3, id_growth: existingSalesData.reduce((a, b) => a + Number(b.id_growth), 0)/3 };
   const totalAnnualData = { sales: fy25AnnualExisting.reduce((a, b) => a + b.sales, 0), nrr: fy25AnnualExisting.reduce((a, b) => a + b.nrr, 0)/3, renewal: fy25AnnualExisting.reduce((a, b) => a + b.renewal, 0)/3, id_growth: fy25AnnualExisting.reduce((a, b) => a + b.id_growth, 0)/3 };
+
+  const CircularRate = ({ label, value, color }: { label: string, value: number, color: string }) => {
+    const data = [{ name: 'Val', value: value }, { name: 'Rest', value: 100 - (value > 100 ? 0 : value) }];
+    return (<div className="flex flex-col items-center"><div className="w-16 h-16 relative"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={data} innerRadius={20} outerRadius={28} startAngle={90} endAngle={-270} dataKey="value" stroke="none"><Cell fill={color} /><Cell fill={PIE_COLORS.off} /></Pie></PieChart></ResponsiveContainer><div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-700">{value.toFixed(1)}%</div></div><span className="text-[10px] font-bold text-slate-600 mt-1">{label}</span></div>);
+  };
+  const SegmentCard = ({ title, data, colorClass, isAnnual = false }: any) => (<div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm flex flex-col h-full bg-white"><div className={`${colorClass} text-white py-2 text-center font-bold text-sm uppercase`}>{title} {isAnnual ? '(FY25通年)' : ''}</div><div className="p-4 flex flex-col items-center justify-between flex-1"><div className="text-center mb-4"><p className="text-[10px] text-slate-500 font-bold mb-1">売上金額(円)</p><p className="text-xl font-extrabold text-slate-800">{Number(data.sales).toLocaleString()}</p></div><div className="flex justify-between w-full px-1"><CircularRate label="NRR" value={Number(data.nrr)} color="#10b981" /><CircularRate label="更新率" value={Number(data.renewal)} color="#3b82f6" /><CircularRate label="ID増減" value={Number(data.id_growth)} color="#f59e0b" /></div></div></div>);
+  const GaugeChart = ({ title, budget, target, actual }: any) => { const budRate = Math.min((actual / budget) * 100, 100); const tarRate = Math.min((actual / target) * 100, 100); return (<div className="flex flex-col items-center p-4 bg-white border border-slate-100 rounded-lg"><h4 className="text-sm font-bold text-slate-700 mb-2">{title}</h4><div className="w-full space-y-2"><div><div className="flex justify-between text-[10px] text-slate-500 mb-0.5"><span>予算比</span><span>{Math.round((actual/budget)*100)}%</span></div><div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden"><div className="bg-blue-500 h-2 rounded-full" style={{ width: `${budRate}%` }}></div></div></div><div><div className="flex justify-between text-[10px] text-slate-500 mb-0.5"><span>目標比</span><span>{Math.round((actual/target)*100)}%</span></div><div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden"><div className="bg-amber-500 h-2 rounded-full" style={{ width: `${tarRate}%` }}></div></div></div></div><div className="mt-2 text-center"><span className="text-lg font-bold text-slate-800">{actual.toLocaleString()}</span><span className="text-[10px] text-slate-400 ml-1">/ Target: {target.toLocaleString()}</span></div></div>); };
 
   return (
     <div className="space-y-6">
@@ -411,13 +457,13 @@ const NegotiationAnalysisTab = () => {
 const ProcessAnalysisTab = () => {
   const fy26EntFunnelData = [{ value: 2500, name: 'リード獲得', fill: '#4f46e5' }, { value: 500, name: '商談化', fill: '#6366f1' }, { value: 250, name: '提案', fill: '#818cf8' }, { value: 50, name: '受注', fill: '#a5b4fc' }];
   const campaignLeadData = [{ name: '[EV] HR Momentum', ent: 99, mid: 46, sml: 72, unk: 22 }, { name: '未入力', ent: 84, mid: 34, sml: 37, unk: 24 }];
-  const sourceData = [{ source: 'Web (Inbound)', leads: 2500, opps: 400, cost: 5000000 }, { source: 'Event', leads: 1200, opps: 150, cost: 8000000 }];
+  const sourceData = [{ source: 'Web (Inbound)', leads: 2500, opps: 400, orders: 80, cost: 5000000, revenue: 12000000 }, { source: 'Event', leads: 1200, opps: 150, orders: 30, cost: 8000000, revenue: 6000000 }];
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><Info size={20} className="text-indigo-600" />プロセス分析コメント</h3><div className="bg-slate-50 p-4 h-24 overflow-y-auto text-sm">コメント...</div></div>
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6"><div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><Filter size={20} className="text-indigo-600" />当月セグメント別 ファネル</h3><div className="h-64 w-full"><ResponsiveContainer width="100%" height="100%"><BarChart data={[{stage:'リード',Ent:200,Mid:400,Small:600}]} layout="vertical"><CartesianGrid strokeDasharray="3 3" /><XAxis type="number" /><YAxis dataKey="stage" type="category" /><Tooltip /><Legend /><Bar dataKey="Ent" stackId="a" fill="#1e5fa0" /><Bar dataKey="Mid" stackId="a" fill="#3b82f6" /><Bar dataKey="Small" stackId="a" fill="#f59e0b" /></BarChart></ResponsiveContainer></div></div><div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><Filter size={20} className="text-indigo-600" />FY26累計ファネル</h3><div className="h-64 w-full"><ResponsiveContainer width="100%" height="100%"><FunnelChart><Tooltip /><Funnel dataKey="value" data={fy26EntFunnelData} isAnimationActive><LabelList position="center" fill="#fff" stroke="none" dataKey="value" /></Funnel></FunnelChart></ResponsiveContainer><div className="mt-4 grid grid-cols-4 gap-2 text-center text-xs">{fy26EntFunnelData.map((d,i)=>(<div key={i} className="p-2 bg-slate-50 rounded"><div className="font-bold">{d.name}</div><div>{d.value}件</div></div>))}</div></div></div>
-       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><DollarSign size={20} className="text-amber-500" />ソース別 獲得分析 & CPA</h3><div className="overflow-x-auto"><table className="w-full text-sm text-right"><thead className="bg-amber-50"><tr><th className="p-3 text-left">ソース</th><th>リード</th><th>商談</th><th>CPL</th><th>CPO</th></tr></thead><tbody>{sourceData.map((s,i)=>(<tr key={i}><td className="p-3 text-left font-bold">{s.source}</td><td>{s.leads}</td><td>{s.opps}</td><td>¥{Math.round(s.cost/s.leads).toLocaleString()}</td><td>¥{Math.round(s.cost/s.opps).toLocaleString()}</td></tr>))}</tbody></table></div></div>
+       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><DollarSign size={20} className="text-amber-500" />ソース別 獲得分析 & CPA</h3><div className="overflow-x-auto"><table className="w-full text-sm text-right"><thead className="bg-amber-50"><tr><th className="p-3 text-left">ソース</th><th>リード</th><th>商談</th><th>CPL</th><th>CPO</th><th>受注単価</th></tr></thead><tbody>{sourceData.map((s,i)=>(<tr key={i}><td className="p-3 text-left font-bold">{s.source}</td><td>{s.leads}</td><td>{s.opps}</td><td>¥{Math.round(s.cost/s.leads).toLocaleString()}</td><td>¥{Math.round(s.cost/s.opps).toLocaleString()}</td><td>¥{Math.round(s.revenue/s.orders).toLocaleString()}</td></tr>))}</tbody></table></div></div>
        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><Megaphone size={20} className="text-rose-500" />キャンペーン別 獲得分析</h3><div className="overflow-x-auto"><table className="w-full text-sm text-right"><thead className="bg-slate-50"><tr><th className="p-2 text-left">CP名</th><th>Ent</th><th>Mid</th><th>Sml</th><th>計</th></tr></thead><tbody>{campaignLeadData.map((c,i)=>(<tr key={i}><td className="p-2 text-left">{c.name}</td><td>{c.ent}</td><td>{c.mid}</td><td>{c.sml}</td><td>{c.ent+c.mid+c.sml+c.unk}</td></tr>))}</tbody></table></div></div>
     </div>
   );
