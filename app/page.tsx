@@ -192,13 +192,13 @@ const GaugeChart = ({ title, budget, target, actual }: any) => {
       <h4 className="text-sm font-bold text-slate-700 mb-2">{title}</h4>
       <div className="w-full space-y-2">
         <div>
-          <div className="flex justify-between text-[10px] text-slate-500 mb-0.5"><span>予算比</span><span>{budget ? Math.round((actual/budget)*100) : 0}%</span></div>
+          <div className="flex justify-between text-[10px] text-slate-500 mb-0.5"><span>予算比</span><span>{budget ? Math.round((actual / budget) * 100) : 0}%</span></div>
           <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
             <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${budRate}%` }}></div>
           </div>
         </div>
         <div>
-          <div className="flex justify-between text-[10px] text-slate-500 mb-0.5"><span>目標比</span><span>{target ? Math.round((actual/target)*100) : 0}%</span></div>
+          <div className="flex justify-between text-[10px] text-slate-500 mb-0.5"><span>目標比</span><span>{target ? Math.round((actual / target) * 100) : 0}%</span></div>
           <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
             <div className="bg-amber-500 h-2 rounded-full" style={{ width: `${tarRate}%` }}></div>
           </div>
@@ -210,6 +210,46 @@ const GaugeChart = ({ title, budget, target, actual }: any) => {
       </div>
     </div>
   );
+};
+
+const PipelineGauge = ({ title, target, forecast }: { title: string, target: number, forecast: number }) => {
+    const percentage = target > 0 ? (forecast / target) * 100 : 0;
+    const cappedPercentage = Math.min(percentage, 100);
+    const data = [{ name: 'Achieved', value: cappedPercentage }, { name: 'Remaining', value: 100 - cappedPercentage }];
+  
+    return (
+      <div className="flex flex-col items-center justify-center p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
+        <h4 className="text-sm font-bold text-slate-700 mb-2">{title}</h4>
+        <div className="relative w-40 h-24">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="100%"
+                startAngle={180}
+                endAngle={0}
+                innerRadius={35}
+                outerRadius={50}
+                paddingAngle={0}
+                dataKey="value"
+                stroke="none"
+              >
+                <Cell fill={percentage >= 100 ? '#10b981' : '#6366f1'} />
+                <Cell fill="#e2e8f0" />
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="absolute bottom-0 left-0 right-0 text-center mb-1">
+             <span className="text-xl font-bold text-slate-800">{percentage.toFixed(0)}%</span>
+          </div>
+        </div>
+        <div className="mt-2 text-xs text-slate-500 text-center">
+            <div>ヨミ: {formatCurrency(forecast)}</div>
+            <div>目標: {formatCurrency(target)}</div>
+        </div>
+      </div>
+    );
 };
 
 const AchievementBadge = ({ label, value }: { label: string, value: number }) => {
@@ -327,11 +367,14 @@ export default function CBDashboard() {
     <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
       <aside className="w-72 bg-slate-900 text-white flex flex-col shadow-xl z-20 overflow-y-auto">
         <div className="p-6 border-b border-slate-700">
-          <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
-            <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
-            <span>Corporate Div.</span>
+          <div className="flex flex-col gap-2 font-bold text-xl tracking-tight">
+            <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center shrink-0">SB</div>
+                <span>Corporate</span>
+            </div>
+            <span className="text-sm pl-10">Business Div.<br/>事業部管理ダッシュボード</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.26</p>
+          <p className="text-xs text-slate-400 mt-4 pl-2">v24.12.27</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -402,13 +445,7 @@ export default function CBDashboard() {
               {activeTab === 'okr' && 'OKR・今後のアクション'}
             </h1>
           </div>
-          <div className="flex items-center gap-4">
-             <div className="text-right hidden md:block">
-                <p className="text-sm font-medium">山田 太郎</p>
-                <p className="text-xs text-slate-500">法人事業部長</p>
-             </div>
-             <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold border border-indigo-100">YT</div>
-          </div>
+          {/* User Profile Removed as requested */}
         </header>
 
         <div className="p-8 pb-20">
@@ -1409,7 +1446,7 @@ const NegotiationAnalysisTab = () => {
   };
 
   const advisorData = [{ source: 'Advisor A', cost: 500000, referrals: 10, lost: 4, ongoing: 4, won: 2, revenue: 3000000 }, { source: 'Advisor B', cost: 300000, referrals: 5, lost: 2, ongoing: 2, won: 1, revenue: 1500000 }];
-  const advisorDealList = [{ company: '株式会社アルファ', segment: 'Enterprise', person: '山田 本部長', status: '提案中', memo: '予算感は合意' }, { company: 'ベータ物流', segment: 'Mid', person: '佐藤 部長', status: '商談化', memo: '競合比較中' }];
+  const advisorDealList = [{ company: '株式会社アルファ', segment: 'Enterprise', person: '山田 本部長', status: '提案中', memo: '予算感は合意。次回決裁者同席。' }, { company: 'ベータ物流', segment: 'Mid', person: '佐藤 部長', status: '商談化', memo: '競合比較中。差別化資料送付済み。' }, { company: 'ガンマ商事', segment: 'Small', person: '鈴木 社長', status: '受注', memo: '即決。来月から導入開始。' }];
   const trialData = [
       { client: '有限会社新浦安ホテルマネージメント', segment: 'Mid', amount: 500000, start: '2025/12/22', end: '-', memo: '' },
       { client: 'エーオンジャパン株式会社 (Speakに競合負け)', segment: 'Small', amount: 400000, start: '2025/12/09', end: '2025/12/23', memo: '音声認識精度が高く、発音の確認ができるが、スピーキング力向上には直結しにくいのではないか。繰り返し学習を促す仕組みがある点がよい。1回10〜15分と短く、手軽にできる。ページ構成がわかりづらく、レッスンの進め方も分かりづらかった。順番通りに進めないと先に進めない点が不便。毎日フリートークではなく、シナリオがある点は良い。ゲーム感覚で進められるため、モチベーション維持に役立つ。実践的なアウトプット練習が加われば、さらに価値が高まると感じた' },
