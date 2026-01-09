@@ -2,61 +2,21 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  ComposedChart,
-  PieChart,
-  Pie,
-  Cell,
-  ReferenceLine,
-  Label,
-  LabelList,
-  Funnel,
-  FunnelChart,
-  LabelList as FunnelLabelList
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  ComposedChart, PieChart, Pie, Cell, ReferenceLine, Label, LabelList,
+  Funnel, FunnelChart, LabelList as FunnelLabelList
 } from 'recharts';
 import {
-  LayoutDashboard,
-  TrendingUp,
-  Activity,
-  Target,
-  Link as LinkIcon,
-  RefreshCw,
-  CheckCircle,
-  Info,
-  Building,
-  FileText,
-  CheckSquare,
-  XSquare,
-  AlertCircle,
-  Layers,
-  Globe,
-  GraduationCap,
-  Users,
-  PieChart as PieChartIcon,
-  Briefcase,
-  Filter,
-  Megaphone,
-  DollarSign,
-  Presentation,
-  List,
-  ClipboardList,
-  Flag,
-  ArrowRight
+  LayoutDashboard, TrendingUp, Activity, Target,
+  Link as LinkIcon, RefreshCw, CheckCircle, Info,
+  Building, FileText, CheckSquare, XSquare, AlertCircle, Layers, Globe, GraduationCap, Users,
+  PieChart as PieChartIcon, Briefcase, Filter, Megaphone, DollarSign, Presentation, List, ClipboardList,
+  Flag, ArrowRight, Rocket, Settings, Volume2
 } from 'lucide-react';
 
 // ==========================================
 // 型定義
 // ==========================================
-
 type SalesRecord = {
   month: string;
   sales_budget: number;
@@ -98,115 +58,29 @@ type ExistingSalesRecord = {
 // ==========================================
 // 定数・モックデータ定義
 // ==========================================
+const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#82ca9d', '#ffc658', '#8884d8'];
+const PIE_COLORS = { on: '#10b981', off: '#e2e8f0' };
 
-const COLORS = [
-  '#6366f1',
-  '#10b981',
-  '#f59e0b',
-  '#ef4444',
-  '#8b5cf6',
-  '#82ca9d',
-  '#ffc658',
-  '#8884d8'
-];
-
-const PIE_COLORS = { 
-  on: '#10b981', 
-  off: '#e2e8f0' 
-};
-
-// メイン売上データ (4月〜翌3月)
+// メイン売上データ
 const INITIAL_SALES_DATA: SalesRecord[] = [
-  { 
-    month: '4月', 
-    sales_budget: 12000, sales_target: 13000, sales_actual: 12500, sales_forecast: 12500, 
-    cost_budget: 4800, cost_target: 5200, cost_actual: 5000, cost_forecast: 5000, 
-    profit_budget: 7200, profit_target: 7800, profit_actual: 7500, profit_forecast: 7500 
-  },
-  { 
-    month: '5月', 
-    sales_budget: 13000, sales_target: 14000, sales_actual: 12800, sales_forecast: 12800, 
-    cost_budget: 5200, cost_target: 5600, cost_actual: 5120, cost_forecast: 5120, 
-    profit_budget: 7800, profit_target: 8400, profit_actual: 7680, profit_forecast: 7680 
-  },
-  { 
-    month: '6月', 
-    sales_budget: 14000, sales_target: 15000, sales_actual: 14500, sales_forecast: 14500, 
-    cost_budget: 5600, cost_target: 6000, cost_actual: 5800, cost_forecast: 5800, 
-    profit_budget: 8400, profit_target: 9000, profit_actual: 8700, profit_forecast: 8700 
-  },
-  { 
-    month: '7月', 
-    sales_budget: 15000, sales_target: 16000, sales_actual: 16000, sales_forecast: 16000, 
-    cost_budget: 6000, cost_target: 6400, cost_actual: 6400, cost_forecast: 6400, 
-    profit_budget: 9000, profit_target: 9600, profit_actual: 9600, profit_forecast: 9600 
-  },
-  { 
-    month: '8月', 
-    sales_budget: 16000, sales_target: 17000, sales_actual: 15800, sales_forecast: 15800, 
-    cost_budget: 6400, cost_target: 6800, cost_actual: 6320, cost_forecast: 6320, 
-    profit_budget: 9600, profit_target: 10200, profit_actual: 9480, profit_forecast: 9480 
-  },
-  { 
-    month: '9月', 
-    sales_budget: 17000, sales_target: 18000, sales_actual: 18200, sales_forecast: 18200, 
-    cost_budget: 6800, cost_target: 7200, cost_actual: 6916, cost_forecast: 6916, 
-    profit_budget: 10200, profit_target: 10800, profit_actual: 11284, profit_forecast: 11284 
-  },
-  { 
-    month: '10月', 
-    sales_budget: 18000, sales_target: 19500, sales_actual: null, sales_forecast: 19000, 
-    cost_budget: 7200, cost_target: 7800, cost_actual: null, cost_forecast: 7600, 
-    profit_budget: 10800, profit_target: 11700, profit_actual: null, profit_forecast: 11400 
-  },
-  { 
-    month: '11月', 
-    sales_budget: 19000, sales_target: 20500, sales_actual: null, sales_forecast: 19500, 
-    cost_budget: 7600, cost_target: 8200, cost_actual: null, cost_forecast: 7800, 
-    profit_budget: 11400, profit_target: 12300, profit_actual: null, profit_forecast: 11700 
-  },
-  { 
-    month: '12月', 
-    sales_budget: 20000, sales_target: 21500, sales_actual: null, sales_forecast: 21000, 
-    cost_budget: 8000, cost_target: 8600, cost_actual: null, cost_forecast: 8400, 
-    profit_budget: 12000, profit_target: 12900, profit_actual: null, profit_forecast: 12600 
-  },
-  { 
-    month: '1月', 
-    sales_budget: 21000, sales_target: 22500, sales_actual: null, sales_forecast: 22000, 
-    cost_budget: 8400, cost_target: 9000, cost_actual: null, cost_forecast: 8800, 
-    profit_budget: 12600, profit_target: 13500, profit_actual: null, profit_forecast: 13200 
-  },
-  { 
-    month: '2月', 
-    sales_budget: 22000, sales_target: 23500, sales_actual: null, sales_forecast: 22500, 
-    cost_budget: 8800, cost_target: 9400, cost_actual: null, cost_forecast: 9000, 
-    profit_budget: 13200, profit_target: 14100, profit_actual: null, profit_forecast: 13500 
-  },
-  { 
-    month: '3月', 
-    sales_budget: 23000, sales_target: 25000, sales_actual: null, sales_forecast: 24000, 
-    cost_budget: 9200, cost_target: 10000, cost_actual: null, cost_forecast: 9600, 
-    profit_budget: 13800, profit_target: 15000, profit_actual: null, profit_forecast: 14400 
-  },
+  { month: '4月', sales_budget: 12000, sales_target: 13000, sales_actual: 12500, sales_forecast: 12500, cost_budget: 4800, cost_target: 5200, cost_actual: 5000, cost_forecast: 5000, profit_budget: 7200, profit_target: 7800, profit_actual: 7500, profit_forecast: 7500 },
+  { month: '5月', sales_budget: 13000, sales_target: 14000, sales_actual: 12800, sales_forecast: 12800, cost_budget: 5200, cost_target: 5600, cost_actual: 5120, cost_forecast: 5120, profit_budget: 7800, profit_target: 8400, profit_actual: 7680, profit_forecast: 7680 },
+  { month: '6月', sales_budget: 14000, sales_target: 15000, sales_actual: 14500, sales_forecast: 14500, cost_budget: 5600, cost_target: 6000, cost_actual: 5800, cost_forecast: 5800, profit_budget: 8400, profit_target: 9000, profit_actual: 8700, profit_forecast: 8700 },
+  { month: '7月', sales_budget: 15000, sales_target: 16000, sales_actual: 16000, sales_forecast: 16000, cost_budget: 6000, cost_target: 6400, cost_actual: 6400, cost_forecast: 6400, profit_budget: 9000, profit_target: 9600, profit_actual: 9600, profit_forecast: 9600 },
+  { month: '8月', sales_budget: 16000, sales_target: 17000, sales_actual: 15800, sales_forecast: 15800, cost_budget: 6400, cost_target: 6800, cost_actual: 6320, cost_forecast: 6320, profit_budget: 9600, profit_target: 10200, profit_actual: 9480, profit_forecast: 9480 },
+  { month: '9月', sales_budget: 17000, sales_target: 18000, sales_actual: 18200, sales_forecast: 18200, cost_budget: 6800, cost_target: 7200, cost_actual: 6916, cost_forecast: 6916, profit_budget: 10200, profit_target: 10800, profit_actual: 11284, profit_forecast: 11284 },
+  { month: '10月', sales_budget: 18000, sales_target: 19500, sales_actual: null, sales_forecast: 19000, cost_budget: 7200, cost_target: 7800, cost_actual: null, cost_forecast: 7600, profit_budget: 10800, profit_target: 11700, profit_actual: null, profit_forecast: 11400 },
+  { month: '11月', sales_budget: 19000, sales_target: 20500, sales_actual: null, sales_forecast: 19500, cost_budget: 7600, cost_target: 8200, cost_actual: null, cost_forecast: 7800, profit_budget: 11400, profit_target: 12300, profit_actual: null, profit_forecast: 11700 },
+  { month: '12月', sales_budget: 20000, sales_target: 21500, sales_actual: null, sales_forecast: 21000, cost_budget: 8000, cost_target: 8600, cost_actual: null, cost_forecast: 8400, profit_budget: 12000, profit_target: 12900, profit_actual: null, profit_forecast: 12600 },
+  { month: '1月', sales_budget: 21000, sales_target: 22500, sales_actual: null, sales_forecast: 22000, cost_budget: 8400, cost_target: 9000, cost_actual: null, cost_forecast: 8800, profit_budget: 12600, profit_target: 13500, profit_actual: null, profit_forecast: 13200 },
+  { month: '2月', sales_budget: 22000, sales_target: 23500, sales_actual: null, sales_forecast: 22500, cost_budget: 8800, cost_target: 9400, cost_actual: null, cost_forecast: 9000, profit_budget: 13200, profit_target: 14100, profit_actual: null, profit_forecast: 13500 },
+  { month: '3月', sales_budget: 23000, sales_target: 25000, sales_actual: null, sales_forecast: 24000, cost_budget: 9200, cost_target: 10000, cost_actual: null, cost_forecast: 9600, profit_budget: 13800, profit_target: 15000, profit_actual: null, profit_forecast: 14400 },
 ];
 
 const MOCK_NEW_SALES_DATA: NewSalesRecord[] = [
-  { 
-    segment: 'Enterprise', 
-    budget: 5000, target: 5500, actual: 4800, last_year: 4000, 
-    count: 5, win_rate: 35, lead_time: 120, unit_price: 840, id_price: 2000, duration: 12 
-  },
-  { 
-    segment: 'Mid', 
-    budget: 3000, target: 3300, actual: 3200, last_year: 2800, 
-    count: 12, win_rate: 45, lead_time: 60, unit_price: 291, id_price: 1500, duration: 12 
-  },
-  { 
-    segment: 'Small', 
-    budget: 1500, target: 1800, actual: 1600, last_year: 1200, 
-    count: 30, win_rate: 60, lead_time: 30, unit_price: 60, id_price: 1200, duration: 12 
-  },
+  { segment: 'Enterprise', budget: 5000, target: 5500, actual: 4800, last_year: 4000, count: 5, win_rate: 35, lead_time: 120, unit_price: 840, id_price: 2000, duration: 12 },
+  { segment: 'Mid', budget: 3000, target: 3300, actual: 3200, last_year: 2800, count: 12, win_rate: 45, lead_time: 60, unit_price: 291, id_price: 1500, duration: 12 },
+  { segment: 'Small', budget: 1500, target: 1800, actual: 1600, last_year: 1200, count: 30, win_rate: 60, lead_time: 30, unit_price: 60, id_price: 1200, duration: 12 },
 ];
 
 const INITIAL_EXISTING_SALES: ExistingSalesRecord[] = [
@@ -215,15 +89,11 @@ const INITIAL_EXISTING_SALES: ExistingSalesRecord[] = [
   { segment: 'Small', sales: 690000, nrr: 83.6, renewal: 100.0, id_growth: 92.0 },
 ];
 
-// ==========================================
-// ヘルパー関数
-// ==========================================
-
+// --- ヘルパー関数 ---
 const parseCSV = (csvText: string): any[] => {
   const cleanText = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
   const lines = cleanText.split('\n');
   const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-  
   return lines.slice(1).map(line => {
     if (!line.trim()) return null;
     const values = line.split(',');
@@ -253,37 +123,20 @@ const formatPercent = (value: number | null | undefined) => {
   return `${value.toFixed(1)}%`;
 };
 
-// ==========================================
-// 共通UIコンポーネント
-// ==========================================
-
+// --- Helper Components ---
 const CircularRate = ({ label, value, color }: { label: string, value: number, color: string }) => {
-  const data = [
-    { name: 'Val', value: value },
-    { name: 'Rest', value: 100 - (value > 100 ? 0 : value) }
-  ];
+  const data = [{ name: 'Val', value: value }, { name: 'Rest', value: 100 - (value > 100 ? 0 : value) }];
   return (
     <div className="flex flex-col items-center">
       <div className="w-16 h-16 relative">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie
-              data={data}
-              innerRadius={20}
-              outerRadius={28}
-              startAngle={90}
-              endAngle={-270}
-              dataKey="value"
-              stroke="none"
-            >
-              <Cell fill={color} />
-              <Cell fill={PIE_COLORS.off} />
+            <Pie data={data} innerRadius={20} outerRadius={28} startAngle={90} endAngle={-270} dataKey="value" stroke="none">
+              <Cell fill={color} /><Cell fill={PIE_COLORS.off} />
             </Pie>
           </PieChart>
         </ResponsiveContainer>
-        <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-700">
-          {value.toFixed(1)}%
-        </div>
+        <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-700">{value.toFixed(1)}%</div>
       </div>
       <span className="text-[10px] font-bold text-slate-600 mt-1">{label}</span>
     </div>
@@ -292,9 +145,7 @@ const CircularRate = ({ label, value, color }: { label: string, value: number, c
 
 const SegmentCard = ({ title, data, colorClass, isAnnual = false }: any) => (
   <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm flex flex-col h-full bg-white">
-    <div className={`${colorClass} text-white py-2 text-center font-bold text-sm uppercase`}>
-      {title} {isAnnual ? '(FY25通年)' : ''}
-    </div>
+    <div className={`${colorClass} text-white py-2 text-center font-bold text-sm uppercase`}>{title} {isAnnual ? '(FY25通年)' : ''}</div>
     <div className="p-4 flex flex-col items-center justify-between flex-1">
       <div className="text-center mb-4">
         <p className="text-[10px] text-slate-500 font-bold mb-1">売上金額(円)</p>
@@ -317,19 +168,13 @@ const GaugeChart = ({ title, budget, target, actual }: any) => {
       <h4 className="text-sm font-bold text-slate-700 mb-2">{title}</h4>
       <div className="w-full space-y-2">
         <div>
-          <div className="flex justify-between text-[10px] text-slate-500 mb-0.5">
-            <span>予算比</span>
-            <span>{budget ? Math.round((actual / budget) * 100) : 0}%</span>
-          </div>
+          <div className="flex justify-between text-[10px] text-slate-500 mb-0.5"><span>予算比</span><span>{budget ? Math.round((actual / budget) * 100) : 0}%</span></div>
           <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
             <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${budRate}%` }}></div>
           </div>
         </div>
         <div>
-          <div className="flex justify-between text-[10px] text-slate-500 mb-0.5">
-            <span>目標比</span>
-            <span>{target ? Math.round((actual / target) * 100) : 0}%</span>
-          </div>
+          <div className="flex justify-between text-[10px] text-slate-500 mb-0.5"><span>目標比</span><span>{target ? Math.round((actual / target) * 100) : 0}%</span></div>
           <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
             <div className="bg-amber-500 h-2 rounded-full" style={{ width: `${tarRate}%` }}></div>
           </div>
@@ -346,12 +191,7 @@ const GaugeChart = ({ title, budget, target, actual }: any) => {
 const PipelineGauge = ({ title, target, forecast }: { title: string, target: number, forecast: number }) => {
     const percentage = target > 0 ? (forecast / target) * 100 : 0;
     const cappedPercentage = Math.min(percentage, 100);
-    
-    // Gauge Data
-    const data = [
-      { name: 'Achieved', value: cappedPercentage },
-      { name: 'Remaining', value: 100 - cappedPercentage },
-    ];
+    const data = [{ name: 'Achieved', value: cappedPercentage }, { name: 'Remaining', value: 100 - cappedPercentage }];
   
     return (
       <div className="flex flex-col items-center justify-center p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
@@ -359,18 +199,7 @@ const PipelineGauge = ({ title, target, forecast }: { title: string, target: num
         <div className="relative w-40 h-24">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="100%"
-                startAngle={180}
-                endAngle={0}
-                innerRadius={35}
-                outerRadius={50}
-                paddingAngle={0}
-                dataKey="value"
-                stroke="none"
-              >
+              <Pie data={data} cx="50%" cy="100%" startAngle={180} endAngle={0} innerRadius={35} outerRadius={50} paddingAngle={0} dataKey="value" stroke="none">
                 <Cell fill={percentage >= 100 ? '#10b981' : '#6366f1'} />
                 <Cell fill="#e2e8f0" />
               </Pie>
@@ -404,7 +233,6 @@ const AchievementBadge = ({ label, value }: { label: string, value: number }) =>
 // ==========================================
 // メインコンポーネント (CBDashboard)
 // ==========================================
-
 export default function CBDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [salesData, setSalesData] = useState<SalesRecord[]>(INITIAL_SALES_DATA);
@@ -429,9 +257,7 @@ export default function CBDashboard() {
     setThisMonthName(months[mIndex]);
     setPrevMonthName(months[mIndex - 1] || months[11]);
     setCurrentMonthIndex(mIndex);
-    if (sheetInput) {
-       handleSheetSync();
-    }
+    if (sheetInput) { handleSheetSync(); }
   }, []);
 
   const handleSheetSync = async () => {
@@ -439,46 +265,25 @@ export default function CBDashboard() {
     setIsSyncing(true);
     setSyncStatus('idle');
     setErrorMessage('');
-    
     try {
       const idMatch = sheetInput.match(/\/d\/([a-zA-Z0-9-_]+)/);
       const cleanId = idMatch ? idMatch[1] : sheetInput;
-
       const requests = ['Main', 'New', 'Existing'].map(sheetName => 
         fetch(`https://docs.google.com/spreadsheets/d/${cleanId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`)
           .then(res => res.text())
       );
-
       const results = await Promise.all(requests);
-
-      const mainData = parseCSV(results[0]);
-      if (mainData.length > 0) setSalesData(mainData);
-
-      const newData = parseCSV(results[1]);
-      if (newData.length > 0 && newData[0].segment) setNewSalesData(newData);
-
-      const existData = parseCSV(results[2]);
-      if (existData.length > 0) setExistingSalesData(existData);
-
-      setSyncStatus('success');
-      setFileName(`All Sheets Synced`);
-      setTimeout(() => setSyncStatus('idle'), 3000);
-
+      const mainData = parseCSV(results[0]); if (mainData.length > 0) setSalesData(mainData);
+      const newData = parseCSV(results[1]); if (newData.length > 0 && newData[0].segment) setNewSalesData(newData);
+      const existData = parseCSV(results[2]); if (existData.length > 0) setExistingSalesData(existData);
+      setSyncStatus('success'); setFileName(`All Sheets Synced`); setTimeout(() => setSyncStatus('idle'), 3000);
     } catch (error: any) {
-      setSyncStatus('error');
-      setErrorMessage('シート読込失敗: ' + error.message);
-    } finally {
-      setIsSyncing(false);
-    }
+      setSyncStatus('error'); setErrorMessage('シート読込失敗: ' + error.message);
+    } finally { setIsSyncing(false); }
   };
 
-  const prevMonthData = prevMonthName 
-    ? (salesData.find(d => d.month === prevMonthName) || salesData[0])
-    : salesData[0];
-
-  const thisMonthData = thisMonthName
-    ? (salesData.find(d => d.month === thisMonthName) || salesData[0])
-    : salesData[0];
+  const prevMonthData = prevMonthName ? (salesData.find(d => d.month === prevMonthName) || salesData[0]) : salesData[0];
+  const thisMonthData = thisMonthName ? (salesData.find(d => d.month === thisMonthName) || salesData[0]) : salesData[0];
 
   if (!isClient) return null;
 
@@ -499,13 +304,9 @@ export default function CBDashboard() {
     <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
       <aside className="w-72 bg-slate-900 text-white flex flex-col shadow-xl z-20 overflow-y-auto">
         <div className="p-6 border-b border-slate-700">
-          <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
-            <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
-            <span>Corporate Div.</span>
-          </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.21</p>
+          <div className="flex items-center gap-2 font-bold text-xl tracking-tight"><div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div><span>Corporate Div.</span></div>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.25</p>
         </div>
-
         <nav className="flex-1 py-6 px-3 space-y-1">
           <NavItem id="overview" label="サマリー / 予実" icon={<LayoutDashboard size={20} />} activeTab={activeTab} setActiveTab={setActiveTab} />
           <NavItem id="sales" label="企業直販売上分" icon={<TrendingUp size={20} />} activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -515,94 +316,41 @@ export default function CBDashboard() {
           <NavItem id="pipeline" label="パイプライン分析" icon={<Target size={20} />} activeTab={activeTab} setActiveTab={setActiveTab} />
           <NavItem id="okr" label="OKR・今後のアクション" icon={<Flag size={20} />} activeTab={activeTab} setActiveTab={setActiveTab} />
         </nav>
-
         <div className="p-4 border-t border-slate-700 bg-slate-800/50">
           <div className="bg-slate-800 rounded-lg p-4 shadow-inner border border-slate-700 space-y-4">
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-indigo-300 font-bold flex items-center gap-1">
-                  <LinkIcon size={12} /> Google Sheets 連携
-                </p>
-                {syncStatus === 'success' && <CheckCircle size={14} className="text-emerald-400" />}
-              </div>
+              <div className="flex items-center justify-between mb-2"><p className="text-xs text-indigo-300 font-bold flex items-center gap-1"><LinkIcon size={12} /> Google Sheets 連携</p>{syncStatus === 'success' && <CheckCircle size={14} className="text-emerald-400" />}</div>
               <div className="space-y-2">
-                <input
-                  type="text"
-                  placeholder="標準ID"
-                  value={sheetInput}
-                  onChange={(e) => setSheetInput(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-                />
-                <button
-                  onClick={handleSheetSync}
-                  disabled={isSyncing || !sheetInput}
-                  className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium rounded transition-all ${
-                    isSyncing 
-                      ? 'bg-slate-700 text-slate-400 cursor-wait' 
-                      : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-900/20'
-                  }`}
-                >
-                  <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
-                  {isSyncing ? 'データ同期' : 'データ同期'}
-                </button>
-              </div>
-              <div className="mt-2 flex items-start gap-1 text-[10px] text-slate-400">
-                <Info size={12} className="mt-0.5 shrink-0" />
-                <p>3つのシート(Main, New, Existing)を読込中</p>
+                <input type="text" placeholder="標準ID" value={sheetInput} onChange={(e) => setSheetInput(e.target.value)} className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+                <button onClick={handleSheetSync} disabled={isSyncing || !sheetInput} className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium rounded transition-all ${isSyncing ? 'bg-slate-700 text-slate-400 cursor-wait' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-900/20'}`}><RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />{isSyncing ? 'データ同期' : 'データ同期'}</button>
               </div>
             </div>
-            {fileName && syncStatus === 'success' && (
-               <div className="mt-2 p-2 bg-emerald-900/30 border border-emerald-800/50 rounded text-[10px] text-emerald-300 truncate">{fileName}</div>
-            )}
-            {syncStatus === 'error' && (
-              <div className="mt-2 p-2 bg-rose-900/30 border border-rose-800/50 rounded text-[10px] text-rose-300 leading-tight">⚠ {errorMessage}</div>
-            )}
+            {fileName && syncStatus === 'success' && (<div className="mt-2 p-2 bg-emerald-900/30 border border-emerald-800/50 rounded text-[10px] text-emerald-300 truncate">{fileName}</div>)}
+            {syncStatus === 'error' && (<div className="mt-2 p-2 bg-rose-900/30 border border-rose-800/50 rounded text-[10px] text-rose-300 leading-tight">⚠ {errorMessage}</div>)}
           </div>
         </div>
       </aside>
-
       <main className="flex-1 overflow-y-auto relative">
         <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10 px-8 py-4 flex justify-between items-center border-b border-slate-200">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">
-              {activeTab === 'overview' && '月次売上および今後の売上予測'}
-              {activeTab === 'sales' && '企業直販売上分 (新規/既存)'}
-              {activeTab === 'other' && 'その他売上分析 (代理店・優待・学校)'}
-              {activeTab === 'marketing' && 'マーケ施策・分析'}
-              {activeTab === 'negotiation' && '商談・トライアル分析レポート'}
-              {activeTab === 'pipeline' && 'パイプライン分析'}
-              {activeTab === 'okr' && 'OKR・今後のアクション'}
-            </h1>
-          </div>
-          <div className="flex items-center gap-4">
-             <div className="text-right hidden md:block">
-                <p className="text-sm font-medium">山田 太郎</p>
-                <p className="text-xs text-slate-500">法人事業部長</p>
-             </div>
-             <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold border border-indigo-100">YT</div>
-          </div>
+          <div><h1 className="text-2xl font-bold text-slate-800">
+            {activeTab === 'overview' && '月次売上および今後の売上予測'}
+            {activeTab === 'sales' && '企業直販売上分 (新規/既存)'}
+            {activeTab === 'other' && 'その他売上分析 (代理店・優待・学校)'}
+            {activeTab === 'marketing' && 'マーケ施策・分析'}
+            {activeTab === 'negotiation' && '商談・トライアル分析レポート'}
+            {activeTab === 'pipeline' && 'パイプライン分析'}
+            {activeTab === 'okr' && 'OKR・今後のアクション'}
+          </h1></div>
+          <div className="flex items-center gap-4"><div className="text-right hidden md:block"><p className="text-sm font-medium">山田 太郎</p><p className="text-xs text-slate-500">法人事業部長</p></div><div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold border border-indigo-100">YT</div></div>
         </header>
-
-        <div className="p-8 pb-20">
-          {renderContent()}
-        </div>
+        <div className="p-8 pb-20">{renderContent()}</div>
       </main>
     </div>
   );
 }
 
 const NavItem = ({ id, label, icon, activeTab, setActiveTab }: any) => (
-  <button
-    onClick={() => setActiveTab(id)}
-    className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all ${
-      activeTab === id
-        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
-        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-    }`}
-  >
-    {icon}
-    {label}
-  </button>
+  <button onClick={() => setActiveTab(id)} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all ${activeTab === id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>{icon}{label}</button>
 );
 
 // ==========================================
@@ -928,12 +676,12 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
                 <tr>
                   <th className="p-3 text-left">セグメント</th>
                   <th className="p-3">金額 (Actual)</th>
-                  <th className="p-3 border-l">件数</th>
+                  <th className="p-3 border-l border-slate-200">件数</th>
                   <th className="p-3">受注率</th>
-                  <th className="p-3">LT</th>
-                  <th className="p-3">社単価</th>
-                  <th className="p-3">ID単価</th>
-                  <th className="p-3">期間</th>
+                  <th className="p-3">リードタイム</th>
+                  <th className="p-3">平均社単価</th>
+                  <th className="p-3">平均ID単価</th>
+                  <th className="p-3">平均期間</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -1556,7 +1304,7 @@ const MarketingAnalysisTab = () => {
 };
 
 // ==========================================
-// 5. Negotiation Analysis Tab (Renamed from NegotiationAnalysisTab)
+// 5. Negotiation & Trial Analysis Tab (Renamed)
 // ==========================================
 const NegotiationAnalysisTab = () => {
   const [url, setUrl] = useState('1UijNvely71JDu73oBoBpho9P84fT-yPmNH2QVVstwO4');
@@ -1611,6 +1359,7 @@ const NegotiationAnalysisTab = () => {
           </div>
        </div>
 
+       {/* Advisor Data Table */}
        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
           <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
              <Users size={20} className="text-emerald-600" />
@@ -1712,6 +1461,7 @@ const NegotiationAnalysisTab = () => {
                 </tbody>
              </table>
           </div>
+
        </div>
     </div>
   );
@@ -1891,14 +1641,118 @@ const PipelineAnalysisTab = () => {
     );
 };
 
-// --- Okr Action Tab (New) ---
+// ==========================================
+// 7. OKR & Future Action Tab (New)
+// ==========================================
 const OkrActionTab = () => {
+    const okrs = [
+        {
+            title: "Objective 1",
+            desc: "受注拡大の加速装置を構築し、FY26上期2.9億円受注を実現可能な状態をつくる",
+            icon: <Rocket size={24} className="text-blue-500" />,
+            color: "border-blue-500",
+            krs: [
+                { label: "635件", text: "リード獲得数（マーケ&営業企画経由525件、セールス経由110件）を達成し、FY26上期目標達成に必要な商談数を創出する" },
+                { label: "160件", text: "8-12月に160件(マーケ&営業企画経由60件、セールス経由100件)の新規商談機会を創出する" },
+                { label: "6社/150%", text: "深耕攻略ターゲット先6社全てにおいてアカウントプランニングを策定し、月次進捗ミーティングを毎月実施することで、次年度初回更新時の受注金額見込み150%を創出する" }
+            ]
+        },
+        {
+            title: "Objective 2",
+            desc: "成長を支えるCS基盤を構築し、顧客の継続率上昇におけるKSFを見つける",
+            icon: <Settings size={24} className="text-teal-500" />,
+            color: "border-teal-500",
+            krs: [
+                { label: "30%削減", text: "サポート業務 1社あたり対応工数を30%以上削減し、サクセス担当としてアプローチできる顧客数を現行比3倍（目標10社/人）に引き上げる体制を構築する" },
+                { label: "オンボーディング標準化", text: "オンボーディングプロセスにおけるサービス/サポートの品質基準を策定し、導入顧客の目標設定および初期支援テンプレートを確立するとともに、管理画面開発に着手する" },
+                { label: "3KPI/10%改善", text: "顧客単位の利用データ可視化基盤を構築した上で、継続率向上にインパクトがある上位3つのKPIを特定し、それらのKPIを10%改善する" }
+            ]
+        },
+        {
+            title: "Objective 3",
+            desc: "AI英会話研修のスタンダードとしてのポジションの確立に向けて、認知度の基盤をつくる",
+            icon: <Volume2 size={24} className="text-green-600" />,
+            color: "border-green-600",
+            krs: [
+                { label: "競合調査", text: "競合となる、レアジョブ・スタサプTOEIC・AI英会話2社(Speak・Elsa)について、法人向け[価格体系、プロダクト機能、管理サポート体制、顧客事例数]の調査を完了し、詳細レポートを作成する" },
+                { label: "勝率80%", text: "競合分析レポートを提案資料にFY25下期中に反映し、Speak/Elsaとのコンペ勝率80%を達成する" },
+                { label: "サイト改修/10件", text: "人的リソースに依存しないスケーラビリティの基盤として法人サイト改修を行うとともに、新規顧客による利用事例10社を法人向けサイトに掲載する" }
+            ]
+        }
+    ];
+
     return (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-96 flex items-center justify-center text-slate-400">
-            <div className="text-center">
-                <Flag size={48} className="mx-auto mb-4 text-slate-300" />
-                <p>OKR & Future Action Plan</p>
-                <p className="text-sm mt-2">コンテンツ準備中...</p>
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* OKR Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {okrs.map((okr, idx) => (
+                    <div key={idx} className={`bg-white rounded-xl shadow-md border-t-4 ${okr.color} p-6 flex flex-col h-full`}>
+                        <div className="flex flex-col items-center text-center mb-6">
+                            <div className="mb-2 p-3 bg-slate-50 rounded-full">{okr.icon}</div>
+                            <h3 className="font-bold text-lg text-slate-800 mb-2">{okr.title}</h3>
+                            <p className="text-sm font-bold text-blue-600 leading-snug">{okr.desc}</p>
+                        </div>
+                        <div className="space-y-6 flex-1">
+                            <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 pb-1">Key Results</h4>
+                            {okr.krs.map((kr, kIdx) => (
+                                <div key={kIdx} className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <CheckSquare size={16} className="text-green-500" />
+                                        <span className="font-bold text-lg text-slate-700">{kr.label}</span>
+                                    </div>
+                                    <p className="text-xs text-slate-500 leading-relaxed pl-6">{kr.text}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Monthly Progress Table */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <Activity size={20} className="text-indigo-600" />
+                    月次進捗トラッキング
+                </h3>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left border-collapse">
+                        <thead className="bg-slate-50 text-slate-600">
+                            <tr>
+                                <th className="p-3 border-b border-slate-200 min-w-[200px]">Key Result</th>
+                                <th className="p-3 border-b border-slate-200 min-w-[100px]">1月</th>
+                                <th className="p-3 border-b border-slate-200 min-w-[100px]">2月</th>
+                                <th className="p-3 border-b border-slate-200 min-w-[100px]">3月</th>
+                                <th className="p-3 border-b border-slate-200 min-w-[100px]">4月</th>
+                                <th className="p-3 border-b border-slate-200 min-w-[100px]">5月</th>
+                                <th className="p-3 border-b border-slate-200 min-w-[100px]">6月</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {okrs.flatMap(o => o.krs).map((kr, i) => (
+                                <tr key={i} className="hover:bg-slate-50">
+                                    <td className="p-3 font-medium text-slate-700">{kr.label}</td>
+                                    {[...Array(6)].map((_, m) => (
+                                        <td key={m} className="p-2">
+                                            <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs focus:outline-none focus:border-indigo-400" placeholder="-" />
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* General Comment Section */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <Info size={20} className="text-indigo-600" />
+                    総括・コメント
+                </h3>
+                <textarea 
+                    className="w-full h-32 p-4 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400 resize-none"
+                    placeholder="ここに全体の振り返りや特記事項を入力してください..."
+                ></textarea>
             </div>
         </div>
     );
