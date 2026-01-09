@@ -55,6 +55,17 @@ type ExistingSalesRecord = {
   id_growth: number;
 };
 
+// OKR用の型定義
+type OkrRecord = {
+  key_result: string;
+  jan: string;
+  feb: string;
+  mar: string;
+  apr: string;
+  may: string;
+  jun: string;
+};
+
 // ==========================================
 // 定数・モックデータ定義
 // ==========================================
@@ -87,6 +98,19 @@ const INITIAL_EXISTING_SALES: ExistingSalesRecord[] = [
   { segment: 'Enterprise', sales: 12134547, nrr: 60.1, renewal: 92.3, id_growth: 63.9 },
   { segment: 'Mid', sales: 6942000, nrr: 61.3, renewal: 60.0, id_growth: 68.2 },
   { segment: 'Small', sales: 690000, nrr: 83.6, renewal: 100.0, id_growth: 92.0 },
+];
+
+// OKR用初期データ
+const INITIAL_OKR_DATA: OkrRecord[] = [
+  { key_result: "635件", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+  { key_result: "160件", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+  { key_result: "6社/150%", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+  { key_result: "30%削減", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+  { key_result: "オンボーディング標準化", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+  { key_result: "3KPI/10%改善", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+  { key_result: "競合調査", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+  { key_result: "勝率80%", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+  { key_result: "サイト改修/10件", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
 ];
 
 // --- ヘルパー関数 ---
@@ -168,13 +192,13 @@ const GaugeChart = ({ title, budget, target, actual }: any) => {
       <h4 className="text-sm font-bold text-slate-700 mb-2">{title}</h4>
       <div className="w-full space-y-2">
         <div>
-          <div className="flex justify-between text-[10px] text-slate-500 mb-0.5"><span>予算比</span><span>{budget ? Math.round((actual / budget) * 100) : 0}%</span></div>
+          <div className="flex justify-between text-[10px] text-slate-500 mb-0.5"><span>予算比</span><span>{budget ? Math.round((actual/budget)*100) : 0}%</span></div>
           <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
             <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${budRate}%` }}></div>
           </div>
         </div>
         <div>
-          <div className="flex justify-between text-[10px] text-slate-500 mb-0.5"><span>目標比</span><span>{target ? Math.round((actual / target) * 100) : 0}%</span></div>
+          <div className="flex justify-between text-[10px] text-slate-500 mb-0.5"><span>目標比</span><span>{target ? Math.round((actual/target)*100) : 0}%</span></div>
           <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
             <div className="bg-amber-500 h-2 rounded-full" style={{ width: `${tarRate}%` }}></div>
           </div>
@@ -186,35 +210,6 @@ const GaugeChart = ({ title, budget, target, actual }: any) => {
       </div>
     </div>
   );
-};
-
-const PipelineGauge = ({ title, target, forecast }: { title: string, target: number, forecast: number }) => {
-    const percentage = target > 0 ? (forecast / target) * 100 : 0;
-    const cappedPercentage = Math.min(percentage, 100);
-    const data = [{ name: 'Achieved', value: cappedPercentage }, { name: 'Remaining', value: 100 - cappedPercentage }];
-  
-    return (
-      <div className="flex flex-col items-center justify-center p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
-        <h4 className="text-sm font-bold text-slate-700 mb-2">{title}</h4>
-        <div className="relative w-40 h-24">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={data} cx="50%" cy="100%" startAngle={180} endAngle={0} innerRadius={35} outerRadius={50} paddingAngle={0} dataKey="value" stroke="none">
-                <Cell fill={percentage >= 100 ? '#10b981' : '#6366f1'} />
-                <Cell fill="#e2e8f0" />
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="absolute bottom-0 left-0 right-0 text-center mb-1">
-             <span className="text-xl font-bold text-slate-800">{percentage.toFixed(0)}%</span>
-          </div>
-        </div>
-        <div className="mt-2 text-xs text-slate-500 text-center">
-            <div>ヨミ: {formatCurrency(forecast)}</div>
-            <div>目標: {formatCurrency(target)}</div>
-        </div>
-      </div>
-    );
 };
 
 const AchievementBadge = ({ label, value }: { label: string, value: number }) => {
@@ -238,6 +233,7 @@ export default function CBDashboard() {
   const [salesData, setSalesData] = useState<SalesRecord[]>(INITIAL_SALES_DATA);
   const [newSalesData, setNewSalesData] = useState<NewSalesRecord[]>(MOCK_NEW_SALES_DATA);
   const [existingSalesData, setExistingSalesData] = useState<ExistingSalesRecord[]>(INITIAL_EXISTING_SALES);
+  const [okrData, setOkrData] = useState<OkrRecord[]>(INITIAL_OKR_DATA);
 
   const [sheetInput, setSheetInput] = useState('1UijNvely71JDu73oBoBpho9P84fT-yPmNH2QVVstwO4'); 
   const [isSyncing, setIsSyncing] = useState(false);
@@ -257,7 +253,9 @@ export default function CBDashboard() {
     setThisMonthName(months[mIndex]);
     setPrevMonthName(months[mIndex - 1] || months[11]);
     setCurrentMonthIndex(mIndex);
-    if (sheetInput) { handleSheetSync(); }
+    if (sheetInput) {
+       handleSheetSync();
+    }
   }, []);
 
   const handleSheetSync = async () => {
@@ -265,25 +263,50 @@ export default function CBDashboard() {
     setIsSyncing(true);
     setSyncStatus('idle');
     setErrorMessage('');
+    
     try {
       const idMatch = sheetInput.match(/\/d\/([a-zA-Z0-9-_]+)/);
       const cleanId = idMatch ? idMatch[1] : sheetInput;
-      const requests = ['Main', 'New', 'Existing'].map(sheetName => 
+
+      // OKRシートも含めて4つ取得
+      const requests = ['Main', 'New', 'Existing', 'OKR'].map(sheetName => 
         fetch(`https://docs.google.com/spreadsheets/d/${cleanId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`)
           .then(res => res.text())
       );
+
       const results = await Promise.all(requests);
-      const mainData = parseCSV(results[0]); if (mainData.length > 0) setSalesData(mainData);
-      const newData = parseCSV(results[1]); if (newData.length > 0 && newData[0].segment) setNewSalesData(newData);
-      const existData = parseCSV(results[2]); if (existData.length > 0) setExistingSalesData(existData);
-      setSyncStatus('success'); setFileName(`All Sheets Synced`); setTimeout(() => setSyncStatus('idle'), 3000);
+
+      const mainData = parseCSV(results[0]);
+      if (mainData.length > 0) setSalesData(mainData);
+
+      const newData = parseCSV(results[1]);
+      if (newData.length > 0 && newData[0].segment) setNewSalesData(newData);
+
+      const existData = parseCSV(results[2]);
+      if (existData.length > 0) setExistingSalesData(existData);
+
+      const okrDataParsed = parseCSV(results[3]);
+      if (okrDataParsed.length > 0 && okrDataParsed[0].key_result) setOkrData(okrDataParsed);
+
+      setSyncStatus('success');
+      setFileName(`All Sheets Synced (incl. OKR)`);
+      setTimeout(() => setSyncStatus('idle'), 3000);
+
     } catch (error: any) {
-      setSyncStatus('error'); setErrorMessage('シート読込失敗: ' + error.message);
-    } finally { setIsSyncing(false); }
+      setSyncStatus('error');
+      setErrorMessage('シート読込失敗: ' + error.message);
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
-  const prevMonthData = prevMonthName ? (salesData.find(d => d.month === prevMonthName) || salesData[0]) : salesData[0];
-  const thisMonthData = thisMonthName ? (salesData.find(d => d.month === thisMonthName) || salesData[0]) : salesData[0];
+  const prevMonthData = prevMonthName 
+    ? (salesData.find(d => d.month === prevMonthName) || salesData[0])
+    : salesData[0];
+
+  const thisMonthData = thisMonthName
+    ? (salesData.find(d => d.month === thisMonthName) || salesData[0])
+    : salesData[0];
 
   if (!isClient) return null;
 
@@ -295,7 +318,7 @@ export default function CBDashboard() {
       case 'marketing': return <MarketingAnalysisTab />;
       case 'negotiation': return <NegotiationAnalysisTab />;
       case 'pipeline': return <PipelineAnalysisTab />;
-      case 'okr': return <OkrActionTab />;
+      case 'okr': return <OkrActionTab okrData={okrData} />;
       default: return <OverviewTab data={salesData} prevData={prevMonthData} thisData={thisMonthData} monthIndex={currentMonthIndex} />;
     }
   };
@@ -304,9 +327,13 @@ export default function CBDashboard() {
     <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
       <aside className="w-72 bg-slate-900 text-white flex flex-col shadow-xl z-20 overflow-y-auto">
         <div className="p-6 border-b border-slate-700">
-          <div className="flex items-center gap-2 font-bold text-xl tracking-tight"><div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div><span>Corporate Div.</span></div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.25</p>
+          <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
+            <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
+            <span>Corporate Div.</span>
+          </div>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.26</p>
         </div>
+
         <nav className="flex-1 py-6 px-3 space-y-1">
           <NavItem id="overview" label="サマリー / 予実" icon={<LayoutDashboard size={20} />} activeTab={activeTab} setActiveTab={setActiveTab} />
           <NavItem id="sales" label="企業直販売上分" icon={<TrendingUp size={20} />} activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -316,41 +343,94 @@ export default function CBDashboard() {
           <NavItem id="pipeline" label="パイプライン分析" icon={<Target size={20} />} activeTab={activeTab} setActiveTab={setActiveTab} />
           <NavItem id="okr" label="OKR・今後のアクション" icon={<Flag size={20} />} activeTab={activeTab} setActiveTab={setActiveTab} />
         </nav>
+
         <div className="p-4 border-t border-slate-700 bg-slate-800/50">
           <div className="bg-slate-800 rounded-lg p-4 shadow-inner border border-slate-700 space-y-4">
             <div>
-              <div className="flex items-center justify-between mb-2"><p className="text-xs text-indigo-300 font-bold flex items-center gap-1"><LinkIcon size={12} /> Google Sheets 連携</p>{syncStatus === 'success' && <CheckCircle size={14} className="text-emerald-400" />}</div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-indigo-300 font-bold flex items-center gap-1">
+                  <LinkIcon size={12} /> Google Sheets 連携
+                </p>
+                {syncStatus === 'success' && <CheckCircle size={14} className="text-emerald-400" />}
+              </div>
               <div className="space-y-2">
-                <input type="text" placeholder="標準ID" value={sheetInput} onChange={(e) => setSheetInput(e.target.value)} className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
-                <button onClick={handleSheetSync} disabled={isSyncing || !sheetInput} className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium rounded transition-all ${isSyncing ? 'bg-slate-700 text-slate-400 cursor-wait' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-900/20'}`}><RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />{isSyncing ? 'データ同期' : 'データ同期'}</button>
+                <input
+                  type="text"
+                  placeholder="標準ID"
+                  value={sheetInput}
+                  onChange={(e) => setSheetInput(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                />
+                <button
+                  onClick={handleSheetSync}
+                  disabled={isSyncing || !sheetInput}
+                  className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium rounded transition-all ${
+                    isSyncing 
+                      ? 'bg-slate-700 text-slate-400 cursor-wait' 
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-900/20'
+                  }`}
+                >
+                  <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+                  {isSyncing ? 'データ同期' : 'データ同期'}
+                </button>
+              </div>
+              <div className="mt-2 flex items-start gap-1 text-[10px] text-slate-400">
+                <Info size={12} className="mt-0.5 shrink-0" />
+                <p>4つのシート(Main,New,Exist,OKR)を読込中</p>
               </div>
             </div>
-            {fileName && syncStatus === 'success' && (<div className="mt-2 p-2 bg-emerald-900/30 border border-emerald-800/50 rounded text-[10px] text-emerald-300 truncate">{fileName}</div>)}
-            {syncStatus === 'error' && (<div className="mt-2 p-2 bg-rose-900/30 border border-rose-800/50 rounded text-[10px] text-rose-300 leading-tight">⚠ {errorMessage}</div>)}
+            {fileName && syncStatus === 'success' && (
+               <div className="mt-2 p-2 bg-emerald-900/30 border border-emerald-800/50 rounded text-[10px] text-emerald-300 truncate">{fileName}</div>
+            )}
+            {syncStatus === 'error' && (
+              <div className="mt-2 p-2 bg-rose-900/30 border border-rose-800/50 rounded text-[10px] text-rose-300 leading-tight">⚠ {errorMessage}</div>
+            )}
           </div>
         </div>
       </aside>
+
       <main className="flex-1 overflow-y-auto relative">
         <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10 px-8 py-4 flex justify-between items-center border-b border-slate-200">
-          <div><h1 className="text-2xl font-bold text-slate-800">
-            {activeTab === 'overview' && '月次売上および今後の売上予測'}
-            {activeTab === 'sales' && '企業直販売上分 (新規/既存)'}
-            {activeTab === 'other' && 'その他売上分析 (代理店・優待・学校)'}
-            {activeTab === 'marketing' && 'マーケ施策・分析'}
-            {activeTab === 'negotiation' && '商談・トライアル分析レポート'}
-            {activeTab === 'pipeline' && 'パイプライン分析'}
-            {activeTab === 'okr' && 'OKR・今後のアクション'}
-          </h1></div>
-          <div className="flex items-center gap-4"><div className="text-right hidden md:block"><p className="text-sm font-medium">山田 太郎</p><p className="text-xs text-slate-500">法人事業部長</p></div><div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold border border-indigo-100">YT</div></div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">
+              {activeTab === 'overview' && '月次売上および今後の売上予測'}
+              {activeTab === 'sales' && '企業直販売上分 (新規/既存)'}
+              {activeTab === 'other' && 'その他売上分析 (代理店・優待・学校)'}
+              {activeTab === 'marketing' && 'マーケ施策・分析'}
+              {activeTab === 'negotiation' && '商談・トライアル分析レポート'}
+              {activeTab === 'pipeline' && 'パイプライン分析'}
+              {activeTab === 'okr' && 'OKR・今後のアクション'}
+            </h1>
+          </div>
+          <div className="flex items-center gap-4">
+             <div className="text-right hidden md:block">
+                <p className="text-sm font-medium">山田 太郎</p>
+                <p className="text-xs text-slate-500">法人事業部長</p>
+             </div>
+             <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold border border-indigo-100">YT</div>
+          </div>
         </header>
-        <div className="p-8 pb-20">{renderContent()}</div>
+
+        <div className="p-8 pb-20">
+          {renderContent()}
+        </div>
       </main>
     </div>
   );
 }
 
 const NavItem = ({ id, label, icon, activeTab, setActiveTab }: any) => (
-  <button onClick={() => setActiveTab(id)} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all ${activeTab === id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>{icon}{label}</button>
+  <button
+    onClick={() => setActiveTab(id)}
+    className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all ${
+      activeTab === id
+        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+    }`}
+  >
+    {icon}
+    {label}
+  </button>
 );
 
 // ==========================================
@@ -399,6 +479,14 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
     { name: 'コスト', budget: n(thisData.cost_budget), target: n(thisData.cost_target), result: n(thisData.cost_forecast) },
     { name: '貢献利益', budget: n(thisData.profit_budget), target: n(thisData.profit_target), result: n(thisData.profit_forecast) },
   ];
+
+  const AchievementBadge = ({ label, value }: { label: string, value: number }) => {
+    const isTarget = label.includes('目標');
+    const bgColor = isTarget ? (value >= 100 ? 'bg-amber-100' : 'bg-white') : (value >= 100 ? 'bg-emerald-100' : 'bg-rose-100');
+    const textColor = isTarget ? (value >= 100 ? 'text-amber-700' : 'text-slate-500') : (value >= 100 ? 'text-emerald-700' : 'text-rose-700');
+    const borderColor = isTarget ? (value >= 100 ? 'border-amber-200' : 'border-slate-200') : (value >= 100 ? 'border-emerald-200' : 'border-rose-200');
+    return (<span className={`px-2 py-0.5 rounded-full font-bold border ${bgColor} ${textColor} ${borderColor} text-[10px]`}>{label} {formatPercent(value)}</span>);
+  };
 
   return (
     <div className="space-y-8">
@@ -676,12 +764,12 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
                 <tr>
                   <th className="p-3 text-left">セグメント</th>
                   <th className="p-3">金額 (Actual)</th>
-                  <th className="p-3 border-l border-slate-200">件数</th>
+                  <th className="p-3 border-l">件数</th>
                   <th className="p-3">受注率</th>
-                  <th className="p-3">リードタイム</th>
-                  <th className="p-3">平均社単価</th>
-                  <th className="p-3">平均ID単価</th>
-                  <th className="p-3">平均期間</th>
+                  <th className="p-3">LT</th>
+                  <th className="p-3">社単価</th>
+                  <th className="p-3">ID単価</th>
+                  <th className="p-3">期間</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -1644,7 +1732,7 @@ const PipelineAnalysisTab = () => {
 // ==========================================
 // 7. OKR & Future Action Tab (New)
 // ==========================================
-const OkrActionTab = () => {
+const OkrActionTab = ({ okrData }: { okrData: OkrRecord[] }) => {
     const okrs = [
         {
             title: "Objective 1",
@@ -1708,34 +1796,35 @@ const OkrActionTab = () => {
                 ))}
             </div>
 
-            {/* Monthly Progress Table */}
+            {/* Monthly Progress Table (Dynamic from CSV) */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                 <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                     <Activity size={20} className="text-indigo-600" />
-                    月次進捗トラッキング
+                    月次OKR進捗トラッキング
                 </h3>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left border-collapse">
-                        <thead className="bg-slate-50 text-slate-600">
+                <div className="w-full overflow-x-auto">
+                    <table className="w-full text-sm text-left border-collapse min-w-[1200px]">
+                        <thead className="bg-slate-50 text-slate-600 sticky top-0 z-10">
                             <tr>
-                                <th className="p-3 border-b border-slate-200 min-w-[200px]">Key Result</th>
-                                <th className="p-3 border-b border-slate-200 min-w-[100px]">1月</th>
-                                <th className="p-3 border-b border-slate-200 min-w-[100px]">2月</th>
-                                <th className="p-3 border-b border-slate-200 min-w-[100px]">3月</th>
-                                <th className="p-3 border-b border-slate-200 min-w-[100px]">4月</th>
-                                <th className="p-3 border-b border-slate-200 min-w-[100px]">5月</th>
-                                <th className="p-3 border-b border-slate-200 min-w-[100px]">6月</th>
+                                <th className="p-3 border-b border-slate-200 min-w-[200px] sticky left-0 bg-slate-50">Key Result</th>
+                                <th className="p-3 border-b border-slate-200 min-w-[180px]">1月</th>
+                                <th className="p-3 border-b border-slate-200 min-w-[180px]">2月</th>
+                                <th className="p-3 border-b border-slate-200 min-w-[180px]">3月</th>
+                                <th className="p-3 border-b border-slate-200 min-w-[180px]">4月</th>
+                                <th className="p-3 border-b border-slate-200 min-w-[180px]">5月</th>
+                                <th className="p-3 border-b border-slate-200 min-w-[180px]">6月</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {okrs.flatMap(o => o.krs).map((kr, i) => (
+                            {okrData.map((row, i) => (
                                 <tr key={i} className="hover:bg-slate-50">
-                                    <td className="p-3 font-medium text-slate-700">{kr.label}</td>
-                                    {[...Array(6)].map((_, m) => (
-                                        <td key={m} className="p-2">
-                                            <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs focus:outline-none focus:border-indigo-400" placeholder="-" />
-                                        </td>
-                                    ))}
+                                    <td className="p-3 font-medium text-slate-700 font-bold sticky left-0 bg-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">{row.key_result}</td>
+                                    <td className="p-2"><textarea className="w-full h-14 bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs focus:outline-none focus:border-indigo-400 resize-none" defaultValue={row.jan} placeholder="-" /></td>
+                                    <td className="p-2"><textarea className="w-full h-14 bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs focus:outline-none focus:border-indigo-400 resize-none" defaultValue={row.feb} placeholder="-" /></td>
+                                    <td className="p-2"><textarea className="w-full h-14 bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs focus:outline-none focus:border-indigo-400 resize-none" defaultValue={row.mar} placeholder="-" /></td>
+                                    <td className="p-2"><textarea className="w-full h-14 bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs focus:outline-none focus:border-indigo-400 resize-none" defaultValue={row.apr} placeholder="-" /></td>
+                                    <td className="p-2"><textarea className="w-full h-14 bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs focus:outline-none focus:border-indigo-400 resize-none" defaultValue={row.may} placeholder="-" /></td>
+                                    <td className="p-2"><textarea className="w-full h-14 bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs focus:outline-none focus:border-indigo-400 resize-none" defaultValue={row.jun} placeholder="-" /></td>
                                 </tr>
                             ))}
                         </tbody>
