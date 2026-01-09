@@ -10,7 +10,7 @@ import {
   LayoutDashboard, TrendingUp, Activity, Target,
   Link as LinkIcon, RefreshCw, CheckCircle, Info,
   Building, FileText, CheckSquare, XSquare, AlertCircle, Layers, Globe, GraduationCap, Users,
-  PieChart as PieChartIcon, Briefcase, Filter, Megaphone, DollarSign
+  PieChart as PieChartIcon, Briefcase, Filter, Megaphone, DollarSign, Presentation
 } from 'lucide-react';
 
 // --- 型定義 ---
@@ -168,13 +168,9 @@ export default function CBDashboard() {
       const idMatch = sheetInput.match(/\/d\/([a-zA-Z0-9-_]+)/);
       const cleanId = idMatch ? idMatch[1] : sheetInput;
 
-      const sheets = ['Main', 'New', 'Existing'];
-      const requests = sheets.map(sheetName => 
+      const requests = ['Main', 'New', 'Existing'].map(sheetName => 
         fetch(`https://docs.google.com/spreadsheets/d/${cleanId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`)
-          .then(res => {
-            if (!res.ok) throw new Error(`${sheetName} tab fetch failed`);
-            return res.text();
-          })
+          .then(res => res.text())
       );
 
       const results = await Promise.all(requests);
@@ -183,9 +179,7 @@ export default function CBDashboard() {
       if (mainData.length > 0) setSalesData(mainData);
 
       const newData = parseCSV(results[1]);
-      if (newData.length > 0 && newData[0].segment) {
-          setNewSalesData(newData);
-      }
+      if (newData.length > 0 && newData[0].segment) setNewSalesData(newData);
 
       const existData = parseCSV(results[2]);
       if (existData.length > 0) setExistingSalesData(existData);
@@ -195,7 +189,6 @@ export default function CBDashboard() {
       setTimeout(() => setSyncStatus('idle'), 3000);
 
     } catch (error: any) {
-      console.error(error);
       setSyncStatus('error');
       setErrorMessage('シート読込失敗: ' + error.message);
     } finally {
@@ -204,11 +197,11 @@ export default function CBDashboard() {
   };
 
   const prevMonthData = prevMonthName 
-    ? (salesData.find(d => d.month === prevMonthName) || salesData[salesData.length - 2] || salesData[0])
+    ? (salesData.find(d => d.month === prevMonthName) || salesData[0])
     : salesData[0];
 
   const thisMonthData = thisMonthName
-    ? (salesData.find(d => d.month === thisMonthName) || salesData[salesData.length - 1] || salesData[0])
+    ? (salesData.find(d => d.month === thisMonthName) || salesData[0])
     : salesData[0];
 
   if (!isClient) return null;
@@ -219,6 +212,7 @@ export default function CBDashboard() {
       case 'sales': return <SalesAnalysisTab newSalesData={newSalesData} existingSalesData={existingSalesData} />;
       case 'other': return <OtherSalesTab />;
       case 'process': return <ProcessAnalysisTab />;
+      case 'negotiation': return <NegotiationAnalysisTab />; // 新規追加
       case 'future': return <FutureActionTab data={salesData} />;
       default: return <OverviewTab data={salesData} prevData={prevMonthData} thisData={thisMonthData} monthIndex={currentMonthIndex} />;
     }
@@ -232,7 +226,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.07</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.08</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -240,6 +234,7 @@ export default function CBDashboard() {
           <NavItem id="sales" label="企業直販売上分" icon={<TrendingUp size={20} />} activeTab={activeTab} setActiveTab={setActiveTab} />
           <NavItem id="other" label="その他売上" icon={<Layers size={20} />} activeTab={activeTab} setActiveTab={setActiveTab} />
           <NavItem id="process" label="要因・プロセス" icon={<Activity size={20} />} activeTab={activeTab} setActiveTab={setActiveTab} />
+          <NavItem id="negotiation" label="商談分析" icon={<Presentation size={20} />} activeTab={activeTab} setActiveTab={setActiveTab} />
           <NavItem id="future" label="未来・アクション" icon={<Target size={20} />} activeTab={activeTab} setActiveTab={setActiveTab} />
         </nav>
 
@@ -296,6 +291,7 @@ export default function CBDashboard() {
               {activeTab === 'sales' && '企業直販売上分 (新規/既存)'}
               {activeTab === 'other' && 'その他売上分析 (代理店・優待・学校)'}
               {activeTab === 'process' && 'プロセス・要因分析'}
+              {activeTab === 'negotiation' && '商談分析レポート'}
               {activeTab === 'future' && '未来予測とアクションプラン'}
             </h1>
           </div>
@@ -330,29 +326,19 @@ const NavItem = ({ id, label, icon, activeTab, setActiveTab }: any) => (
   </button>
 );
 
-// --- OverviewTab ---
+// --- OverviewTab (省略なし) ---
 const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
   if (!prevData || !thisData || !data) return <div className="p-8 text-slate-500">Loading data...</div>;
 
   const n = (val: any) => Number(val) || 0;
-
   const prevSalesBudget = n(prevData.sales_budget);
   const prevSalesTarget = n(prevData.sales_target);
   const prevSalesActual = n(prevData.sales_actual) || n(prevData.sales_forecast); 
-  const prevCostActual = n(prevData.cost_actual) || n(prevData.cost_forecast);
-  const prevProfitActual = n(prevData.profit_actual) || n(prevData.profit_forecast);
-
   const thisSalesBudget = n(thisData.sales_budget);
   const thisSalesTarget = n(thisData.sales_target);
   const thisSalesForecast = n(thisData.sales_forecast); 
-  const thisSalesBudgetDiff = thisSalesBudget ? (thisSalesForecast / thisSalesBudget) * 100 : 0;
-  const thisSalesTargetDiff = thisSalesTarget ? (thisSalesForecast / thisSalesTarget) * 100 : 0;
-
-  const thisCostForecast = n(thisData.cost_forecast);
-  const thisProfitForecast = n(thisData.profit_forecast);
 
   const safeSum = (arr: any[], key: string) => arr.reduce((acc, cur) => acc + (Number(cur[key]) || 0), 0);
-
   const quarterIdx = Math.floor(monthIndex / 3);
   const quarterStartIdx = quarterIdx * 3;
   const quarterData = data.slice(quarterStartIdx, quarterStartIdx + 3);
@@ -376,23 +362,22 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
   const yBudgetAchieve = yBudget ? (yForecast / yBudget) * 100 : 0;
   const yTargetAchieve = yTarget ? (yForecast / yTarget) * 100 : 0;
 
-
   const prevChartData = [
     { name: '売上', budget: prevSalesBudget, target: prevSalesTarget, actual: prevSalesActual },
-    { name: 'コスト', budget: n(prevData.cost_budget), target: n(prevData.cost_target), actual: prevCostActual },
-    { name: '貢献利益', budget: n(prevData.profit_budget), target: n(prevData.profit_target), actual: prevProfitActual },
+    { name: 'コスト', budget: n(prevData.cost_budget), target: n(prevData.cost_target), actual: n(prevData.cost_actual) },
+    { name: '貢献利益', budget: n(prevData.profit_budget), target: n(prevData.profit_target), actual: n(prevData.profit_actual) },
   ];
 
   const prevTableData = [
     { name: '売上', budget: prevSalesBudget, target: prevSalesTarget, result: prevSalesActual },
-    { name: 'コスト', budget: n(prevData.cost_budget), target: n(prevData.cost_target), result: prevCostActual },
-    { name: '貢献利益', budget: n(prevData.profit_budget), target: n(prevData.profit_target), result: prevProfitActual },
+    { name: 'コスト', budget: n(prevData.cost_budget), target: n(prevData.cost_target), result: n(prevData.cost_actual) },
+    { name: '貢献利益', budget: n(prevData.profit_budget), target: n(prevData.profit_target), result: n(prevData.profit_actual) },
   ];
 
   const thisTableData = [
     { name: '売上', budget: thisSalesBudget, target: thisSalesTarget, result: thisSalesForecast },
-    { name: 'コスト', budget: n(thisData.cost_budget), target: n(thisData.cost_target), result: thisCostForecast },
-    { name: '貢献利益', budget: n(thisData.profit_budget), target: n(thisData.profit_target), result: thisProfitForecast },
+    { name: 'コスト', budget: n(thisData.cost_budget), target: n(thisData.cost_target), result: n(thisData.cost_forecast) },
+    { name: '貢献利益', budget: n(thisData.profit_budget), target: n(thisData.profit_target), result: n(thisData.profit_forecast) },
   ];
 
   const AchievementBadge = ({ label, value }: { label: string, value: number }) => {
@@ -505,12 +490,6 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
       <div className="my-8">
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <TrendingUp size={20} className="text-indigo-600" />
-                    予算・目標 vs 実績・予測推移 (売上)
-                    </h3>
-                </div>
                 <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -519,9 +498,7 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
                         <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} tickFormatter={(value) => `${value/1000}k`} />
                         <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }} formatter={(value: any) => `¥${Number(value).toLocaleString()}`} />
                         <Legend iconType="circle" wrapperStyle={{paddingTop: '20px'}} />
-                        <ReferenceLine x={thisData.month} stroke="#10b981" strokeDasharray="3 3">
-                            <Label value="Current" position="top" fill="#10b981" fontSize={10} fontWeight="bold" offset={10} />
-                        </ReferenceLine>
+                        <ReferenceLine x={thisData.month} stroke="#10b981" strokeDasharray="3 3" />
                         <Bar dataKey="sales_actual" name="実績" barSize={30} fill="#6366f1" radius={[4, 4, 0, 0]} />
                         <Line type="monotone" dataKey="sales_forecast" name="予測" stroke="#94a3b8" strokeDasharray="5 5" dot={{r: 3}} strokeWidth={2} />
                         <Line type="monotone" dataKey="sales_budget" name="予算" stroke="#fb7185" strokeWidth={3} dot={{r: 4, strokeWidth: 2, fill: '#fff'}} />
@@ -532,9 +509,7 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
                 </div>
 
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-800 mb-4">着地見込サマリー</h3>
-                    <div className="space-y-4">
+                  <div className="space-y-4">
                       
                       <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-100">
                           <p className="text-xs text-indigo-800 mb-1 font-bold">四半期 ({quarterIdx+1}Q) 予測合計</p>
@@ -570,7 +545,6 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
                       </div>
 
                     </div>
-                  </div>
                 </div>
             </div>
       </div>
@@ -598,18 +572,18 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
     { month: '9月', count: 20, amount: 6200 },
   ];
 
+  const thisMonthDealList = [
+    { date: '2025/01/10', client: 'Fの杜', segment: 'Enterprise', amount: 2200, id_count: 80, duration: '12ヶ月', owner: '佐藤' },
+    { date: '2025/01/08', client: 'G建設', segment: 'Mid', amount: 550, id_count: 25, duration: '12ヶ月', owner: '田中' },
+    { date: '2025/01/05', client: 'Hデザイン', segment: 'Small', amount: 80, id_count: 8, duration: '12ヶ月', owner: '鈴木' },
+  ];
+
   const dealList = [
     { date: '2024/09/25', client: '株式会社A商事', segment: 'Enterprise', amount: 1500, id_count: 50, duration: '12ヶ月', owner: '佐藤' },
     { date: '2024/09/20', client: 'Bテック株式会社', segment: 'Mid', amount: 400, id_count: 20, duration: '12ヶ月', owner: '田中' },
     { date: '2024/09/18', client: 'Cソリューションズ', segment: 'Mid', amount: 350, id_count: 15, duration: '6ヶ月', owner: '田中' },
     { date: '2024/09/15', client: 'D物流', segment: 'Small', amount: 50, id_count: 5, duration: '1ヶ月', owner: '鈴木' },
     { date: '2024/09/10', client: 'E不動産', segment: 'Enterprise', amount: 1200, id_count: 40, duration: '12ヶ月', owner: '佐藤' },
-  ];
-
-  const thisMonthDealList = [
-    { date: '2025/01/10', client: 'Fの杜', segment: 'Enterprise', amount: 2200, id_count: 80, duration: '12ヶ月', owner: '佐藤' },
-    { date: '2025/01/08', client: 'G建設', segment: 'Mid', amount: 550, id_count: 25, duration: '12ヶ月', owner: '田中' },
-    { date: '2025/01/05', client: 'Hデザイン', segment: 'Small', amount: 80, id_count: 8, duration: '12ヶ月', owner: '鈴木' },
   ];
 
   // --- Mock Data: Existing Sales ---
@@ -1195,6 +1169,96 @@ const OtherSalesTab = () => {
     );
 };
 
+// --- Negotiation Analysis Tab (New) ---
+const NegotiationAnalysisTab = () => {
+  const [url, setUrl] = useState('');
+  
+  // Mock Data for Advisor Referrals
+  const advisorData = [
+     { source: 'Advisor A', cost: 500000, referrals: 10, lost: 4, ongoing: 4, won: 2, revenue: 3000000 },
+     { source: 'Advisor B', cost: 300000, referrals: 5, lost: 2, ongoing: 2, won: 1, revenue: 1500000 },
+     { source: 'Advisor C', cost: 200000, referrals: 3, lost: 1, ongoing: 2, won: 0, revenue: 0 },
+  ];
+
+  return (
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+       {/* 1. PDF Embed Section */}
+       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+             <Presentation size={20} className="text-indigo-600" />
+             月次商談分析レポート (PDF埋め込み)
+          </h3>
+          <div className="mb-4">
+             <input 
+               type="text" 
+               placeholder="Google Drive共有URLまたはIDを入力" 
+               className="w-full p-2 border border-slate-300 rounded text-sm"
+               value={url}
+               onChange={(e) => setUrl(e.target.value)}
+             />
+             <p className="text-xs text-slate-400 mt-1">※Googleドライブの共有設定を「リンクを知っている全員」にしてください。</p>
+          </div>
+          <div className="w-full h-[600px] bg-slate-50 border border-slate-200 rounded flex items-center justify-center">
+             {url ? (
+                <iframe 
+                  src={url.includes('drive.google.com') ? url.replace('/view', '/preview') : `https://drive.google.com/file/d/${url}/preview`}
+                  width="100%" 
+                  height="100%" 
+                  className="rounded"
+                ></iframe>
+             ) : (
+                <p className="text-slate-400">PDFレポートを表示するにはURLを入力してください</p>
+             )}
+          </div>
+       </div>
+
+       {/* 2. Advisor Data Table */}
+       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+          <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+             <Users size={20} className="text-emerald-600" />
+             顧問経由商談 ソース別獲得分析 & CPA
+          </h3>
+          <div className="overflow-x-auto">
+             <table className="w-full text-sm text-right whitespace-nowrap">
+                <thead className="bg-emerald-50 text-emerald-900 border-b-2 border-emerald-200">
+                   <tr>
+                      <th className="p-3 text-left">ソース (顧問名)</th>
+                      <th className="p-3">総コスト</th>
+                      <th className="p-3">紹介数</th>
+                      <th className="p-3">失注数</th>
+                      <th className="p-3">継続商談数</th>
+                      <th className="p-3">受注数</th>
+                      <th className="p-3">受注金額</th>
+                      <th className="p-3">受注単価</th>
+                      <th className="p-3">受注率</th>
+                   </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                   {advisorData.map((d, i) => {
+                      const unitPrice = d.won > 0 ? Math.round(d.revenue / d.won) : 0;
+                      const winRate = d.referrals > 0 ? ((d.won / d.referrals) * 100).toFixed(1) : 0;
+                      return (
+                         <tr key={i} className="hover:bg-slate-50">
+                            <td className="p-3 text-left font-bold">{d.source}</td>
+                            <td className="p-3">¥{d.cost.toLocaleString()}</td>
+                            <td className="p-3">{d.referrals}</td>
+                            <td className="p-3 text-rose-500">{d.lost}</td>
+                            <td className="p-3 text-amber-500">{d.ongoing}</td>
+                            <td className="p-3 font-bold text-emerald-600">{d.won}</td>
+                            <td className="p-3 font-bold">¥{d.revenue.toLocaleString()}</td>
+                            <td className="p-3">¥{unitPrice.toLocaleString()}</td>
+                            <td className="p-3 font-bold">{winRate}%</td>
+                         </tr>
+                      );
+                   })}
+                </tbody>
+             </table>
+          </div>
+       </div>
+    </div>
+  );
+};
+
 // --- Process Analysis Tab ---
 const ProcessAnalysisTab = () => {
   const segmentFunnelData = [
@@ -1204,7 +1268,7 @@ const ProcessAnalysisTab = () => {
     { stage: '受注', Ent: 15, Mid: 25, Small: 45 },
   ];
 
-  // FY26 Cumulative Funnel Data (Enterprise) - Color Gradient & Labels inside
+  // FY26 Cumulative Funnel Data (Enterprise)
   const fy26EntFunnelData = [
     { value: 2500, name: 'リード獲得', fill: '#4f46e5' },
     { value: 500, name: '商談化', fill: '#6366f1' },
@@ -1237,6 +1301,7 @@ const ProcessAnalysisTab = () => {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
        
+       {/* 1. Comment Section */}
        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
           <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
              <Info size={20} className="text-indigo-600" />
@@ -1247,6 +1312,7 @@ const ProcessAnalysisTab = () => {
           </div>
        </div>
 
+       {/* 2. Funnel Analysis */}
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
              <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
@@ -1314,7 +1380,7 @@ const ProcessAnalysisTab = () => {
           </div>
        </div>
 
-       {/* 2. Current Stock KPI */}
+       {/* 3. Current Stock KPI */}
        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
              <div>
@@ -1339,7 +1405,7 @@ const ProcessAnalysisTab = () => {
           </div>
        </div>
 
-       {/* 3. Source Analysis (Modified with Unit Price) */}
+       {/* 4. Source Analysis (Modified with Unit Price) */}
        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
           <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
              <DollarSign size={20} className="text-amber-500" />
@@ -1370,7 +1436,7 @@ const ProcessAnalysisTab = () => {
           </div>
        </div>
 
-       {/* 4. Campaign Analysis (Leads Only) */}
+       {/* 5. Campaign Analysis (Leads Only) */}
        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
           <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
              <Megaphone size={20} className="text-rose-500" />
