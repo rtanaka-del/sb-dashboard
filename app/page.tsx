@@ -307,8 +307,9 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
         <h2 className="text-xl font-bold text-slate-800 mb-4 border-l-4 border-emerald-500 pl-3">[当月サマリー詳細]</h2>
         <div className="overflow-x-auto"><table className="w-full text-right min-w-[600px]"><thead className="bg-slate-50 text-slate-500"><tr><th className="p-3 text-left">項目</th><th>予算</th><th>目標</th><th>予測</th><th>対予算</th><th>対目標</th></tr></thead><tbody>{thisTableData.map(r=>(<tr key={r.name} className="border-b"><td className="p-3 text-left font-bold">{r.name}</td><td>{r.budget.toLocaleString()}</td><td>{r.target.toLocaleString()}</td><td className="font-bold">{r.result.toLocaleString()}</td><td>{formatPercent(r.budget ? r.result/r.budget*100 : 0)}</td><td>{formatPercent(r.target ? r.result/r.target*100 : 0)}</td></tr>))}</tbody></table></div>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-           <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100"><div className="h-80 w-full"><ResponsiveContainer width="100%" height="100%"><ComposedChart data={data}><CartesianGrid strokeDasharray="3 3" vertical={false} /><XAxis dataKey="month" /><YAxis /><Tooltip formatter={(v:any)=>formatCurrency(v)} /><Bar dataKey="sales_actual" fill="#6366f1" /><Line type="monotone" dataKey="sales_forecast" stroke="#94a3b8" /><Line type="monotone" dataKey="sales_budget" stroke="#fb7185" /><Line type="monotone" dataKey="sales_target" stroke="#f59e0b" /></ComposedChart></ResponsiveContainer></div></div>
+      <div className="my-8">
+         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100"><div className="h-80 w-full"><ResponsiveContainer width="100%" height="100%"><ComposedChart data={data}><CartesianGrid strokeDasharray="3 3" vertical={false} /><XAxis dataKey="month" /><YAxis /><Tooltip formatter={(v:any)=>formatCurrency(v)} /><Bar dataKey="sales_actual" fill="#6366f1" /><Line type="monotone" dataKey="sales_forecast" stroke="#94a3b8" /><Line type="monotone" dataKey="sales_budget" stroke="#fb7185" /><Line type="monotone" dataKey="sales_target" stroke="#f59e0b" /></ComposedChart></ResponsiveContainer></div></div>
            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
               <div className="space-y-4">
                  <div className="p-4 bg-indigo-50 rounded-lg"><p className="text-xs font-bold text-indigo-800">四半期予測</p><div className="text-2xl font-bold">{formatCurrency(qForecast)}</div><div className="flex gap-2"><AchievementBadge label="予算" value={qBudget?qForecast/qBudget*100:0} /><AchievementBadge label="目標" value={qTarget?qForecast/qTarget*100:0} /></div></div>
@@ -324,7 +325,6 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
 // --- Sales Analysis Tab ---
 const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: NewSalesRecord[], existingSalesData: ExistingSalesRecord[] }) => {
   const [subTab, setSubTab] = useState<'new' | 'existing'>('new');
-  // ... (省略せず実装) ...
   const fy26Cumulative = [
     { segment: 'Enterprise', budget: 30000, actual: 32000, count: 25, win_rate: 34, lead_time: 110, unit_price: 850, id_price: 2000, duration: 12 },
     { segment: 'Mid', budget: 18000, actual: 17500, count: 60, win_rate: 42, lead_time: 55, unit_price: 290, id_price: 1500, duration: 12 },
@@ -415,5 +415,7 @@ const ProcessAnalysisTab = () => {
 };
 
 const FutureActionTab = ({ data }: any) => {
-    return (<div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-96 flex items-center justify-center text-slate-400">Future Action Content (Use previous code)</div>);
+    return (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-96 flex items-center justify-center text-slate-400">Future Action Content (Use previous code)</div>
+    );
 };
