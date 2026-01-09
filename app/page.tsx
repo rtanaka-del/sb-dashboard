@@ -232,7 +232,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.06</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.07</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -345,6 +345,9 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
   const thisSalesBudget = n(thisData.sales_budget);
   const thisSalesTarget = n(thisData.sales_target);
   const thisSalesForecast = n(thisData.sales_forecast); 
+  const thisSalesBudgetDiff = thisSalesBudget ? (thisSalesForecast / thisSalesBudget) * 100 : 0;
+  const thisSalesTargetDiff = thisSalesTarget ? (thisSalesForecast / thisSalesTarget) * 100 : 0;
+
   const thisCostForecast = n(thisData.cost_forecast);
   const thisProfitForecast = n(thisData.profit_forecast);
 
@@ -595,18 +598,18 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
     { month: '9月', count: 20, amount: 6200 },
   ];
 
-  const thisMonthDealList = [
-    { date: '2025/01/10', client: 'Fの杜', segment: 'Enterprise', amount: 2200, id_count: 80, duration: '12ヶ月', owner: '佐藤' },
-    { date: '2025/01/08', client: 'G建設', segment: 'Mid', amount: 550, id_count: 25, duration: '12ヶ月', owner: '田中' },
-    { date: '2025/01/05', client: 'Hデザイン', segment: 'Small', amount: 80, id_count: 8, duration: '12ヶ月', owner: '鈴木' },
-  ];
-
   const dealList = [
     { date: '2024/09/25', client: '株式会社A商事', segment: 'Enterprise', amount: 1500, id_count: 50, duration: '12ヶ月', owner: '佐藤' },
     { date: '2024/09/20', client: 'Bテック株式会社', segment: 'Mid', amount: 400, id_count: 20, duration: '12ヶ月', owner: '田中' },
     { date: '2024/09/18', client: 'Cソリューションズ', segment: 'Mid', amount: 350, id_count: 15, duration: '6ヶ月', owner: '田中' },
     { date: '2024/09/15', client: 'D物流', segment: 'Small', amount: 50, id_count: 5, duration: '1ヶ月', owner: '鈴木' },
     { date: '2024/09/10', client: 'E不動産', segment: 'Enterprise', amount: 1200, id_count: 40, duration: '12ヶ月', owner: '佐藤' },
+  ];
+
+  const thisMonthDealList = [
+    { date: '2025/01/10', client: 'Fの杜', segment: 'Enterprise', amount: 2200, id_count: 80, duration: '12ヶ月', owner: '佐藤' },
+    { date: '2025/01/08', client: 'G建設', segment: 'Mid', amount: 550, id_count: 25, duration: '12ヶ月', owner: '田中' },
+    { date: '2025/01/05', client: 'Hデザイン', segment: 'Small', amount: 80, id_count: 8, duration: '12ヶ月', owner: '鈴木' },
   ];
 
   // --- Mock Data: Existing Sales ---
@@ -1192,7 +1195,7 @@ const OtherSalesTab = () => {
     );
 };
 
-// --- Process Analysis Tab (Fix: Funnel, Table Layout) ---
+// --- Process Analysis Tab ---
 const ProcessAnalysisTab = () => {
   const segmentFunnelData = [
     { stage: 'リード獲得', Ent: 200, Mid: 400, Small: 600 },
@@ -1225,16 +1228,25 @@ const ProcessAnalysisTab = () => {
   ];
 
   const sourceData = [
-    { source: 'Web (Inbound)', leads: 2500, opps: 400, cost: 5000000 },
-    { source: 'Event / Seminar', leads: 1200, opps: 150, cost: 8000000 },
-    { source: 'Outbound (SDR)', leads: 800, opps: 120, cost: 4000000 },
-    { source: 'Referral / Partner', leads: 300, opps: 80, cost: 500000 },
+    { source: 'Web (Inbound)', leads: 2500, opps: 400, orders: 80, cost: 5000000, revenue: 12000000 },
+    { source: 'Event / Seminar', leads: 1200, opps: 150, orders: 30, cost: 8000000, revenue: 6000000 },
+    { source: 'Outbound (SDR)', leads: 800, opps: 120, orders: 20, cost: 4000000, revenue: 5000000 },
+    { source: 'Referral / Partner', leads: 300, opps: 80, orders: 40, cost: 500000, revenue: 8000000 },
   ];
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
        
-       {/* 1. Funnel Analysis */}
+       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+             <Info size={20} className="text-indigo-600" />
+             プロセス・要因分析コメント
+          </h3>
+          <div className="bg-slate-50 p-4 rounded-lg h-24 overflow-y-auto text-sm text-slate-700 leading-relaxed">
+             コメントをここに入力...
+          </div>
+       </div>
+
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
              <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
@@ -1327,7 +1339,7 @@ const ProcessAnalysisTab = () => {
           </div>
        </div>
 
-       {/* 3. Source Analysis (New Placement) */}
+       {/* 3. Source Analysis (Modified with Unit Price) */}
        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
           <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
              <DollarSign size={20} className="text-amber-500" />
@@ -1337,7 +1349,7 @@ const ProcessAnalysisTab = () => {
              <table className="w-full text-sm text-right whitespace-nowrap">
                 <thead className="bg-amber-50 text-amber-900 border-b-2 border-amber-200">
                    <tr>
-                      <th className="p-3 text-left">ソース</th><th className="p-3">獲得リード数</th><th className="p-3">商談化数</th><th className="p-3">商談化率</th><th className="p-3">総コスト (概算)</th><th className="p-3">CPL (リード単価)</th><th className="p-3">CPO (商談単価)</th>
+                      <th className="p-3 text-left">ソース</th><th className="p-3">獲得リード数</th><th className="p-3">商談化数</th><th className="p-3">商談化率</th><th className="p-3">総コスト (概算)</th><th className="p-3">CPL (リード単価)</th><th className="p-3">CPO (商談単価)</th><th className="p-3 border-l-2 border-amber-200">受注単価 (平均)</th>
                    </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -1350,6 +1362,7 @@ const ProcessAnalysisTab = () => {
                          <td className="p-3">¥{s.cost.toLocaleString()}</td>
                          <td className="p-3">¥{Math.round(s.cost/s.leads).toLocaleString()}</td>
                          <td className="p-3">¥{Math.round(s.cost/s.opps).toLocaleString()}</td>
+                         <td className="p-3 border-l border-slate-100 font-bold text-slate-700">¥{Math.round(s.revenue/s.orders).toLocaleString()}</td>
                       </tr>
                    ))}
                 </tbody>
@@ -1398,40 +1411,11 @@ const ProcessAnalysisTab = () => {
 
 const FutureActionTab = ({ data }: any) => {
     return (
-        <div className="space-y-6">
-            <div className="bg-gradient-to-r from-slate-800 to-indigo-900 text-white p-6 rounded-xl shadow-lg">
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    <Target className="text-indigo-400" />
-                    戦略的フォーカスエリア (Q3-Q4)
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm border border-white/10">
-                        <h3 className="font-bold text-indigo-300 mb-2 text-sm">1. エンタープライズ深耕</h3>
-                        <p className="text-xs text-slate-300 leading-relaxed">製造業大手の導入成功事例を横展開。</p>
-                    </div>
-                    <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm border border-white/10">
-                        <h3 className="font-bold text-emerald-300 mb-2 text-sm">2. チャーンレートの抑制</h3>
-                        <p className="text-xs text-slate-300 leading-relaxed">学習定着ワークショップを無償提供。</p>
-                    </div>
-                    <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm border border-white/10">
-                        <h3 className="font-bold text-rose-300 mb-2 text-sm">3. 営業リソース最適化</h3>
-                        <p className="text-xs text-slate-300 leading-relaxed">提案→受注転換率改善に集中。</p>
-                    </div>
-                </div>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                <div className="h-64 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={data.slice(6, 12)} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                            <XAxis dataKey="month" tick={{fontSize: 12}} />
-                            <YAxis domain={['auto', 'auto']} tick={{fontSize: 12}} />
-                            <Tooltip />
-                            <Legend />
-                            <Line type="monotone" dataKey="sales_forecast" name="ベースライン" stroke="#6366f1" strokeWidth={3} />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-96 flex items-center justify-center text-slate-400">
+            <div className="text-center">
+                <Target size={48} className="mx-auto mb-4 text-slate-300" />
+                <p>Future Action Analysis & Simulation</p>
+                <p className="text-sm mt-2">Coming soon...</p>
             </div>
         </div>
     );
