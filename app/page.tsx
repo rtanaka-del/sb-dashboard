@@ -84,6 +84,13 @@ const INITIAL_EXISTING_SALES: ExistingSalesRecord[] = [
   { segment: 'Small', sales: 690000, nrr: 83.6, renewal: 100.0, id_growth: 92.0 },
 ];
 
+const FUNNEL_DATA = [
+  { stage: 'リード獲得', value: 1200 },
+  { stage: '商談化', value: 450 },
+  { stage: '提案', value: 200 },
+  { stage: '受注', value: 85 },
+];
+
 // --- ヘルパー関数 ---
 const parseCSV = (csvText: string): any[] => {
   const cleanText = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
@@ -198,11 +205,13 @@ export default function CBDashboard() {
   const [salesData, setSalesData] = useState<SalesRecord[]>(INITIAL_SALES_DATA);
   const [newSalesData, setNewSalesData] = useState<NewSalesRecord[]>(MOCK_NEW_SALES_DATA);
   const [existingSalesData, setExistingSalesData] = useState<ExistingSalesRecord[]>(INITIAL_EXISTING_SALES);
+
   const [sheetInput, setSheetInput] = useState('1UijNvely71JDu73oBoBpho9P84fT-yPmNH2QVVstwO4'); 
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [fileName, setFileName] = useState('');
+  
   const [prevMonthName, setPrevMonthName] = useState<string>('');
   const [thisMonthName, setThisMonthName] = useState<string>('');
   const [currentMonthIndex, setCurrentMonthIndex] = useState<number>(0);
@@ -259,7 +268,7 @@ export default function CBDashboard() {
       <aside className="w-72 bg-slate-900 text-white flex flex-col shadow-xl z-20 overflow-y-auto">
         <div className="p-6 border-b border-slate-700">
           <div className="flex items-center gap-2 font-bold text-xl tracking-tight"><div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div><span>Corporate Div.</span></div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.13</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.14</p>
         </div>
         <nav className="flex-1 py-6 px-3 space-y-1">
           <NavItem id="overview" label="サマリー / 予実" icon={<LayoutDashboard size={20} />} activeTab={activeTab} setActiveTab={setActiveTab} />
