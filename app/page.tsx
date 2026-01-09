@@ -84,13 +84,6 @@ const INITIAL_EXISTING_SALES: ExistingSalesRecord[] = [
   { segment: 'Small', sales: 690000, nrr: 83.6, renewal: 100.0, id_growth: 92.0 },
 ];
 
-const FUNNEL_DATA = [
-  { stage: 'リード獲得', value: 1200 },
-  { stage: '商談化', value: 450 },
-  { stage: '提案', value: 200 },
-  { stage: '受注', value: 85 },
-];
-
 // --- ヘルパー関数 ---
 const parseCSV = (csvText: string): any[] => {
   const cleanText = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
@@ -204,11 +197,13 @@ export default function CBDashboard() {
   const [salesData, setSalesData] = useState<SalesRecord[]>(INITIAL_SALES_DATA);
   const [newSalesData, setNewSalesData] = useState<NewSalesRecord[]>(MOCK_NEW_SALES_DATA);
   const [existingSalesData, setExistingSalesData] = useState<ExistingSalesRecord[]>(INITIAL_EXISTING_SALES);
+
   const [sheetInput, setSheetInput] = useState('1UijNvely71JDu73oBoBpho9P84fT-yPmNH2QVVstwO4'); 
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [fileName, setFileName] = useState('');
+  
   const [prevMonthName, setPrevMonthName] = useState<string>('');
   const [thisMonthName, setThisMonthName] = useState<string>('');
   const [currentMonthIndex, setCurrentMonthIndex] = useState<number>(0);
@@ -265,7 +260,7 @@ export default function CBDashboard() {
       <aside className="w-72 bg-slate-900 text-white flex flex-col shadow-xl z-20 overflow-y-auto">
         <div className="p-6 border-b border-slate-700">
           <div className="flex items-center gap-2 font-bold text-xl tracking-tight"><div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div><span>Corporate Div.</span></div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.10</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.11</p>
         </div>
         <nav className="flex-1 py-6 px-3 space-y-1">
           <NavItem id="overview" label="サマリー / 予実" icon={<LayoutDashboard size={20} />} activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -284,6 +279,8 @@ export default function CBDashboard() {
                 <button onClick={handleSheetSync} disabled={isSyncing || !sheetInput} className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium rounded transition-all ${isSyncing ? 'bg-slate-700 text-slate-400 cursor-wait' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-900/20'}`}><RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />{isSyncing ? 'データ同期' : 'データ同期'}</button>
               </div>
             </div>
+            {fileName && syncStatus === 'success' && (<div className="mt-2 p-2 bg-emerald-900/30 border border-emerald-800/50 rounded text-[10px] text-emerald-300 truncate">{fileName}</div>)}
+            {syncStatus === 'error' && (<div className="mt-2 p-2 bg-rose-900/30 border border-rose-800/50 rounded text-[10px] text-rose-300 leading-tight">⚠ {errorMessage}</div>)}
           </div>
         </div>
       </aside>
@@ -302,6 +299,7 @@ const NavItem = ({ id, label, icon, activeTab, setActiveTab }: any) => (
   <button onClick={() => setActiveTab(id)} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all ${activeTab === id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>{icon}{label}</button>
 );
 
+// --- OverviewTab ---
 const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
   if (!prevData || !thisData || !data) return <div className="p-8 text-slate-500">Loading data...</div>;
   const n = (val: any) => Number(val) || 0;
@@ -417,11 +415,8 @@ const ProcessAnalysisTab = () => {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><Info size={20} className="text-indigo-600" />プロセス分析コメント</h3><div className="bg-slate-50 p-4 h-24 overflow-y-auto text-sm">コメント...</div></div>
-       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6"><div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><Filter size={20} className="text-indigo-600" />当月セグメント別 ファネル</h3><div className="h-64 w-full"><ResponsiveContainer width="100%" height="100%"><BarChart data={segmentFunnelData} layout="vertical"><CartesianGrid strokeDasharray="3 3" /><XAxis type="number" /><YAxis dataKey="stage" type="category" /><Tooltip /><Legend /><Bar dataKey="Ent" stackId="a" fill="#1e5fa0" /><Bar dataKey="Mid" stackId="a" fill="#3b82f6" /><Bar dataKey="Small" stackId="a" fill="#f59e0b" /></BarChart></ResponsiveContainer></div></div><div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><Filter size={20} className="text-indigo-600" />FY26累計ファネル</h3><div className="h-64 w-full"><ResponsiveContainer width="100%" height="100%"><FunnelChart><Tooltip /><Funnel dataKey="value" data={fy26EntFunnelData} isAnimationActive><LabelList position="center" fill="#fff" stroke="none" dataKey="value" /></Funnel></FunnelChart></ResponsiveContainer><div className="mt-4 grid grid-cols-4 gap-2 text-center text-xs">{fy26EntFunnelData.map((d,i)=>(<div key={i} className="p-2 bg-slate-50 rounded"><div className="font-bold">{d.name}</div><div>{d.value}件</div></div>))}</div></div></div>
-       
-       {/* 修正: ソース別分析テーブルに受注単価列を追加 */}
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6"><div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><Filter size={20} className="text-indigo-600" />当月セグメント別 ファネル</h3><div className="h-64 w-full"><ResponsiveContainer width="100%" height="100%"><BarChart data={[{stage:'リード',Ent:200,Mid:400,Small:600}]} layout="vertical"><CartesianGrid strokeDasharray="3 3" /><XAxis type="number" /><YAxis dataKey="stage" type="category" /><Tooltip /><Legend /><Bar dataKey="Ent" stackId="a" fill="#1e5fa0" /><Bar dataKey="Mid" stackId="a" fill="#3b82f6" /><Bar dataKey="Small" stackId="a" fill="#f59e0b" /></BarChart></ResponsiveContainer></div></div><div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><Filter size={20} className="text-indigo-600" />FY26累計ファネル</h3><div className="h-64 w-full"><ResponsiveContainer width="100%" height="100%"><FunnelChart><Tooltip /><Funnel dataKey="value" data={fy26EntFunnelData} isAnimationActive><LabelList position="center" fill="#fff" stroke="none" dataKey="value" /></Funnel></FunnelChart></ResponsiveContainer><div className="mt-4 grid grid-cols-4 gap-2 text-center text-xs">{fy26EntFunnelData.map((d,i)=>(<div key={i} className="p-2 bg-slate-50 rounded"><div className="font-bold">{d.name}</div><div>{d.value}件</div></div>))}</div></div></div>
        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><DollarSign size={20} className="text-amber-500" />ソース別 獲得分析 & CPA</h3><div className="overflow-x-auto"><table className="w-full text-sm text-right"><thead className="bg-amber-50"><tr><th className="p-3 text-left">ソース</th><th>リード</th><th>商談</th><th>CPL</th><th>CPO</th><th>受注単価</th></tr></thead><tbody>{sourceData.map((s,i)=>(<tr key={i}><td className="p-3 text-left font-bold">{s.source}</td><td>{s.leads}</td><td>{s.opps}</td><td>¥{Math.round(s.cost/s.leads).toLocaleString()}</td><td>¥{Math.round(s.cost/s.opps).toLocaleString()}</td><td>¥{Math.round(s.revenue/s.orders).toLocaleString()}</td></tr>))}</tbody></table></div></div>
-       
        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><Megaphone size={20} className="text-rose-500" />キャンペーン別 獲得分析</h3><div className="overflow-x-auto"><table className="w-full text-sm text-right"><thead className="bg-slate-50"><tr><th className="p-2 text-left">CP名</th><th>Ent</th><th>Mid</th><th>Sml</th><th>計</th></tr></thead><tbody>{campaignLeadData.map((c,i)=>(<tr key={i}><td className="p-2 text-left">{c.name}</td><td>{c.ent}</td><td>{c.mid}</td><td>{c.sml}</td><td>{c.ent+c.mid+c.sml+c.unk}</td></tr>))}</tbody></table></div></div>
     </div>
   );
