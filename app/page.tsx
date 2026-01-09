@@ -10,7 +10,7 @@ import {
   LayoutDashboard, TrendingUp, Activity, Target,
   Link as LinkIcon, RefreshCw, CheckCircle, Info,
   Building, FileText, CheckSquare, XSquare, AlertCircle, Layers, Globe, GraduationCap, Users,
-  PieChart as PieChartIcon, Briefcase, Filter, Megaphone, DollarSign, Presentation
+  PieChart as PieChartIcon, Briefcase, Filter, Megaphone, DollarSign, Presentation, List
 } from 'lucide-react';
 
 // --- 型定義 ---
@@ -212,7 +212,7 @@ export default function CBDashboard() {
       case 'sales': return <SalesAnalysisTab newSalesData={newSalesData} existingSalesData={existingSalesData} />;
       case 'other': return <OtherSalesTab />;
       case 'process': return <ProcessAnalysisTab />;
-      case 'negotiation': return <NegotiationAnalysisTab />; // 新規追加
+      case 'negotiation': return <NegotiationAnalysisTab />;
       case 'future': return <FutureActionTab data={salesData} />;
       default: return <OverviewTab data={salesData} prevData={prevMonthData} thisData={thisMonthData} monthIndex={currentMonthIndex} />;
     }
@@ -226,7 +226,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.08</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.09</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -498,7 +498,9 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
                         <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} tickFormatter={(value) => `${value/1000}k`} />
                         <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }} formatter={(value: any) => `¥${Number(value).toLocaleString()}`} />
                         <Legend iconType="circle" wrapperStyle={{paddingTop: '20px'}} />
-                        <ReferenceLine x={thisData.month} stroke="#10b981" strokeDasharray="3 3" />
+                        <ReferenceLine x={thisData.month} stroke="#10b981" strokeDasharray="3 3">
+                            <Label value="Current" position="top" fill="#10b981" fontSize={10} fontWeight="bold" offset={10} />
+                        </ReferenceLine>
                         <Bar dataKey="sales_actual" name="実績" barSize={30} fill="#6366f1" radius={[4, 4, 0, 0]} />
                         <Line type="monotone" dataKey="sales_forecast" name="予測" stroke="#94a3b8" strokeDasharray="5 5" dot={{r: 3}} strokeWidth={2} />
                         <Line type="monotone" dataKey="sales_budget" name="予算" stroke="#fb7185" strokeWidth={3} dot={{r: 4, strokeWidth: 2, fill: '#fff'}} />
@@ -545,6 +547,7 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
                       </div>
 
                     </div>
+                  </div>
                 </div>
             </div>
       </div>
@@ -1171,13 +1174,20 @@ const OtherSalesTab = () => {
 
 // --- Negotiation Analysis Tab (New) ---
 const NegotiationAnalysisTab = () => {
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState('1UijNvely71JDu73oBoBpho9P84fT-yPmNH2QVVstwO4');
   
   // Mock Data for Advisor Referrals
   const advisorData = [
      { source: 'Advisor A', cost: 500000, referrals: 10, lost: 4, ongoing: 4, won: 2, revenue: 3000000 },
      { source: 'Advisor B', cost: 300000, referrals: 5, lost: 2, ongoing: 2, won: 1, revenue: 1500000 },
      { source: 'Advisor C', cost: 200000, referrals: 3, lost: 1, ongoing: 2, won: 0, revenue: 0 },
+  ];
+
+  // Advisor Deal List
+  const advisorDealList = [
+    { company: '株式会社アルファ', segment: 'Enterprise', person: '山田 本部長', status: '提案中', memo: '予算感は合意。次回決裁者同席。' },
+    { company: 'ベータ物流', segment: 'Mid', person: '佐藤 部長', status: '商談化', memo: '競合比較中。差別化資料送付済み。' },
+    { company: 'ガンマ商事', segment: 'Small', person: '鈴木 社長', status: '受注', memo: '即決。来月から導入開始。' },
   ];
 
   return (
@@ -1218,7 +1228,7 @@ const NegotiationAnalysisTab = () => {
              <Users size={20} className="text-emerald-600" />
              顧問経由商談 ソース別獲得分析 & CPA
           </h3>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto mb-8">
              <table className="w-full text-sm text-right whitespace-nowrap">
                 <thead className="bg-emerald-50 text-emerald-900 border-b-2 border-emerald-200">
                    <tr>
@@ -1251,6 +1261,35 @@ const NegotiationAnalysisTab = () => {
                          </tr>
                       );
                    })}
+                </tbody>
+             </table>
+          </div>
+
+          <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+             <List size={20} className="text-indigo-600" />
+             顧問経由商談一覧
+          </h3>
+          <div className="overflow-x-auto">
+             <table className="w-full text-sm text-left whitespace-nowrap">
+                <thead className="bg-slate-50 text-slate-700 border-b-2 border-slate-200">
+                   <tr>
+                      <th className="p-3">企業名</th>
+                      <th className="p-3">セグメント</th>
+                      <th className="p-3">面談相手</th>
+                      <th className="p-3">ステータス</th>
+                      <th className="p-3">商談メモ</th>
+                   </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                   {advisorDealList.map((deal, i) => (
+                      <tr key={i} className="hover:bg-slate-50">
+                         <td className="p-3 font-bold">{deal.company}</td>
+                         <td className="p-3"><span className="px-2 py-0.5 bg-slate-100 rounded text-xs">{deal.segment}</span></td>
+                         <td className="p-3">{deal.person}</td>
+                         <td className="p-3"><span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-xs font-bold">{deal.status}</span></td>
+                         <td className="p-3 text-xs text-slate-500">{deal.memo}</td>
+                      </tr>
+                   ))}
                 </tbody>
              </table>
           </div>
