@@ -84,13 +84,6 @@ const INITIAL_EXISTING_SALES: ExistingSalesRecord[] = [
   { segment: 'Small', sales: 690000, nrr: 83.6, renewal: 100.0, id_growth: 92.0 },
 ];
 
-const FUNNEL_DATA = [
-  { stage: 'リード獲得', value: 1200 },
-  { stage: '商談化', value: 450 },
-  { stage: '提案', value: 200 },
-  { stage: '受注', value: 85 },
-];
-
 // --- ヘルパー関数 ---
 const parseCSV = (csvText: string): any[] => {
   const cleanText = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
@@ -196,7 +189,11 @@ const AchievementBadge = ({ label, value }: { label: string, value: number }) =>
   const bgColor = isTarget ? (value >= 100 ? 'bg-amber-100' : 'bg-white') : (value >= 100 ? 'bg-emerald-100' : 'bg-rose-100');
   const textColor = isTarget ? (value >= 100 ? 'text-amber-700' : 'text-slate-500') : (value >= 100 ? 'text-emerald-700' : 'text-rose-700');
   const borderColor = isTarget ? (value >= 100 ? 'border-amber-200' : 'border-slate-200') : (value >= 100 ? 'border-emerald-200' : 'border-rose-200');
-  return (<span className={`px-2 py-0.5 rounded-full font-bold border ${bgColor} ${textColor} ${borderColor} text-[10px]`}>{label} {formatPercent(value)}</span>);
+  return (
+    <span className={`px-2 py-0.5 rounded-full font-bold border ${bgColor} ${textColor} ${borderColor} text-[10px]`}>
+      {label} {formatPercent(value)}
+    </span>
+  );
 };
 
 // --- メインコンポーネント ---
@@ -224,7 +221,9 @@ export default function CBDashboard() {
     setThisMonthName(months[mIndex]);
     setPrevMonthName(months[mIndex - 1] || months[11]);
     setCurrentMonthIndex(mIndex);
-    if (sheetInput) { handleSheetSync(); }
+    if (sheetInput) {
+       handleSheetSync();
+    }
   }, []);
 
   const handleSheetSync = async () => {
@@ -232,6 +231,7 @@ export default function CBDashboard() {
     setIsSyncing(true);
     setSyncStatus('idle');
     setErrorMessage('');
+    
     try {
       const idMatch = sheetInput.match(/\/d\/([a-zA-Z0-9-_]+)/);
       const cleanId = idMatch ? idMatch[1] : sheetInput;
@@ -289,7 +289,7 @@ export default function CBDashboard() {
             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
             <span>Corporate Div.</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.11</p>
+          <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.12</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -550,6 +550,12 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
       <div className="my-8">
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <TrendingUp size={20} className="text-indigo-600" />
+                    予算・目標 vs 実績・予測推移 (売上)
+                    </h3>
+                </div>
                 <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -607,7 +613,6 @@ const OverviewTab = ({ data, prevData, thisData, monthIndex }: any) => {
                       </div>
 
                     </div>
-                  </div>
                 </div>
             </div>
       </div>
@@ -1068,16 +1073,95 @@ const SalesAnalysisTab = ({ newSalesData, existingSalesData }: { newSalesData: N
 
 // --- Other Sales Tab ---
 const OtherSalesTab = () => {
-    const segments = [{ name: '企業代理店', budget: 1000, target: 1200, actual: 1100 }, { name: '企業優待', budget: 500, target: 600, actual: 550 }, { name: '学校・自治体', budget: 2000, target: 2000, actual: 1800 }, { name: '留学エージェント', budget: 800, target: 1000, actual: 900 }];
-    const partners = [{ name: 'Partner A', value: 1200 }, { name: 'Partner B', value: 900 }, { name: 'Partner C', value: 800 }, { name: 'Partner D', value: 600 }, { name: 'その他', value: 500 }];
+    const segments = [
+        { name: '企業代理店', budget: 1000, target: 1200, actual: 1100 },
+        { name: '企業優待', budget: 500, target: 600, actual: 550 },
+        { name: '学校・自治体', budget: 2000, target: 2000, actual: 1800 },
+        { name: '留学エージェント', budget: 800, target: 1000, actual: 900 },
+    ];
+
+    const partners = [
+        { name: 'Partner A', value: 1200 },
+        { name: 'Partner B', value: 900 },
+        { name: 'Partner C', value: 800 },
+        { name: 'Partner D', value: 600 },
+        { name: 'Partner E', value: 400 },
+        { name: 'Partner F', value: 300 },
+        { name: 'Partner G', value: 200 },
+        { name: 'Partner H', value: 150 },
+        { name: 'Partner I', value: 100 },
+        { name: 'Partner J', value: 80 },
+        { name: 'その他', value: 500 },
+    ];
     const totalOtherSales = partners.reduce((a, b) => a + b.value, 0);
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><Info size={20} className="text-indigo-600" />その他売上コメント</h3><div className="bg-slate-50 p-4 rounded-lg h-24 overflow-y-auto text-sm">コメント...</div></div>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <Info size={20} className="text-indigo-600" />
+                    その他売上コメント
+                </h3>
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 h-24 overflow-y-auto text-sm text-slate-700 leading-relaxed">
+                    <p><strong>学校・自治体:</strong> 今月は自治体案件の入札があり、来月以降の売上増が見込まれます。</p>
+                    <p><strong>企業優待:</strong> 福利厚生サイト経由の流入が安定しています。</p>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><Activity size={20} className="text-indigo-600" />前月セグメント別 予実 (その他)</h3><div className="h-80 w-full"><ResponsiveContainer width="100%" height="100%"><BarChart data={segments}><CartesianGrid strokeDasharray="3 3" vertical={false} /><XAxis dataKey="name" /><YAxis /><Tooltip formatter={(v:any)=>formatCurrency(v)} /><Legend /><Bar dataKey="budget" name="予算" fill="#94a3b8" /><Bar dataKey="target" name="目標" fill="#fbbf24" /><Bar dataKey="actual" name="実績" fill="#6366f1" /></BarChart></ResponsiveContainer></div></div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><PieChartIcon size={20} className="text-indigo-600" />取引先別 売上構成比</h3><div className="h-80 w-full flex"><ResponsiveContainer width="60%" height="100%"><PieChart><Pie data={partners} cx="50%" cy="50%" outerRadius={80} dataKey="value"><Cell fill={COLORS[0]} /><Cell fill={COLORS[1]} /><Cell fill={COLORS[2]} /><Cell fill={COLORS[3]} /><Cell fill={COLORS[4]} /></Pie><Tooltip /></PieChart></ResponsiveContainer><div className="w-[40%] flex flex-col justify-center space-y-2 overflow-y-auto max-h-80 text-xs">{partners.map((p, i) => (<div key={i} className="flex justify-between items-center pr-4"><div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div><span>{p.name}</span></div><div className="text-right"><span className="font-bold">{p.value.toLocaleString()}</span><span className="text-slate-400 ml-1">({((p.value/totalOtherSales)*100).toFixed(1)}%)</span></div></div>))}</div></div></div>
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <Activity size={20} className="text-indigo-600" />
+                        前月セグメント別 予実 (その他)
+                    </h3>
+                    <div className="h-80 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={segments} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="name" tick={{fontSize: 12}} />
+                                <YAxis />
+                                <Tooltip formatter={(value:any) => formatCurrency(value)} />
+                                <Legend />
+                                <Bar dataKey="budget" name="予算" fill="#94a3b8" />
+                                <Bar dataKey="target" name="目標" fill="#fbbf24" />
+                                <Bar dataKey="actual" name="実績" fill="#6366f1" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <PieChartIcon size={20} className="text-indigo-600" />
+                        取引先別 売上構成比 (上位10社 + その他)
+                    </h3>
+                    <div className="h-80 w-full flex">
+                        <ResponsiveContainer width="60%" height="100%">
+                            <PieChart>
+                                <Pie data={partners} cx="50%" cy="50%" outerRadius={80} dataKey="value">
+                                    {partners.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip formatter={(value:any) => formatCurrency(value)} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                        <div className="w-[40%] flex flex-col justify-center space-y-2 overflow-y-auto max-h-80 text-xs">
+                            {partners.map((p, i) => (
+                                <div key={i} className="flex justify-between items-center pr-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
+                                        <span>{p.name}</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="font-bold">{p.value.toLocaleString()}</span>
+                                        <span className="text-slate-400 ml-1">({((p.value/totalOtherSales)*100).toFixed(1)}%)</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -1086,32 +1170,335 @@ const OtherSalesTab = () => {
 // --- Negotiation Analysis Tab ---
 const NegotiationAnalysisTab = () => {
   const [url, setUrl] = useState('1UijNvely71JDu73oBoBpho9P84fT-yPmNH2QVVstwO4');
-  const advisorData = [{ source: 'Advisor A', cost: 500000, referrals: 10, lost: 4, ongoing: 4, won: 2, revenue: 3000000 }, { source: 'Advisor B', cost: 300000, referrals: 5, lost: 2, ongoing: 2, won: 1, revenue: 1500000 }];
-  const advisorDealList = [{ company: '株式会社アルファ', segment: 'Enterprise', person: '山田 本部長', status: '提案中', memo: '予算感は合意' }, { company: 'ベータ物流', segment: 'Mid', person: '佐藤 部長', status: '商談化', memo: '競合比較中' }];
+  const advisorData = [
+     { source: 'Advisor A', cost: 500000, referrals: 10, lost: 4, ongoing: 4, won: 2, revenue: 3000000 },
+     { source: 'Advisor B', cost: 300000, referrals: 5, lost: 2, ongoing: 2, won: 1, revenue: 1500000 },
+     { source: 'Advisor C', cost: 200000, referrals: 3, lost: 1, ongoing: 2, won: 0, revenue: 0 },
+  ];
+  const advisorDealList = [
+    { company: '株式会社アルファ', segment: 'Enterprise', person: '山田 本部長', status: '提案中', memo: '予算感は合意。次回決裁者同席。' },
+    { company: 'ベータ物流', segment: 'Mid', person: '佐藤 部長', status: '商談化', memo: '競合比較中。差別化資料送付済み。' },
+    { company: 'ガンマ商事', segment: 'Small', person: '鈴木 社長', status: '受注', memo: '即決。来月から導入開始。' },
+  ];
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><Presentation size={20} className="text-indigo-600" />月次商談分析レポート</h3><input type="text" className="w-full p-2 border mb-4 rounded text-sm" value={url} onChange={(e)=>setUrl(e.target.value)} /><div className="w-full h-[600px] bg-slate-50 border rounded flex items-center justify-center">{url ? (<iframe src={url.includes('drive.google.com') ? url.replace('/view', '/preview') : `https://drive.google.com/file/d/${url}/preview`} width="100%" height="100%" className="rounded"></iframe>) : <p>URLを入力してください</p>}</div></div>
-       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><Users size={20} className="text-emerald-600" />顧問経由商談 CPA</h3><div className="overflow-x-auto mb-8"><table className="w-full text-sm text-right"><thead className="bg-emerald-50 text-emerald-900"><tr><th className="p-3 text-left">ソース</th><th>総コスト</th><th>紹介数</th><th>失注</th><th>継続</th><th>受注</th><th>受注金額</th><th>単価</th><th>受注率</th></tr></thead><tbody>{advisorData.map((d,i)=>(<tr key={i}><td className="p-3 text-left font-bold">{d.source}</td><td>¥{d.cost.toLocaleString()}</td><td>{d.referrals}</td><td>{d.lost}</td><td>{d.ongoing}</td><td className="font-bold text-emerald-600">{d.won}</td><td>¥{d.revenue.toLocaleString()}</td><td>¥{(d.won?Math.round(d.revenue/d.won):0).toLocaleString()}</td><td>{(d.referrals?d.won/d.referrals*100:0).toFixed(1)}%</td></tr>))}</tbody></table></div><h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><List size={20} className="text-indigo-600" />顧問経由商談一覧</h3><div className="overflow-x-auto"><table className="w-full text-sm text-left"><thead className="bg-slate-50"><tr><th className="p-3">企業名</th><th>セグメント</th><th>面談相手</th><th>ステータス</th><th>メモ</th></tr></thead><tbody>{advisorDealList.map((d,i)=>(<tr key={i}><td className="p-3 font-bold">{d.company}</td><td>{d.segment}</td><td>{d.person}</td><td>{d.status}</td><td className="text-xs text-slate-500">{d.memo}</td></tr>))}</tbody></table></div></div>
+       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+             <Presentation size={20} className="text-indigo-600" />
+             月次商談分析レポート (PDF埋め込み)
+          </h3>
+          <div className="mb-4">
+             <input 
+               type="text" 
+               placeholder="Google Drive共有URLまたはIDを入力" 
+               className="w-full p-2 border border-slate-300 rounded text-sm"
+               value={url}
+               onChange={(e) => setUrl(e.target.value)}
+             />
+             <p className="text-xs text-slate-400 mt-1">※Googleドライブの共有設定を「リンクを知っている全員」にしてください。</p>
+          </div>
+          <div className="w-full h-[600px] bg-slate-50 border border-slate-200 rounded flex items-center justify-center">
+             {url ? (
+                <iframe 
+                  src={url.includes('drive.google.com') ? url.replace('/view', '/preview') : `https://drive.google.com/file/d/${url}/preview`}
+                  width="100%" 
+                  height="100%" 
+                  className="rounded"
+                ></iframe>
+             ) : (
+                <p className="text-slate-400">PDFレポートを表示するにはURLを入力してください</p>
+             )}
+          </div>
+       </div>
+
+       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+          <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+             <Users size={20} className="text-emerald-600" />
+             顧問経由商談 ソース別獲得分析 & CPA
+          </h3>
+          <div className="overflow-x-auto mb-8">
+             <table className="w-full text-sm text-right whitespace-nowrap">
+                <thead className="bg-emerald-50 text-emerald-900 border-b-2 border-emerald-200">
+                   <tr>
+                      <th className="p-3 text-left">ソース (顧問名)</th>
+                      <th className="p-3">総コスト</th>
+                      <th className="p-3">紹介数</th>
+                      <th className="p-3">失注数</th>
+                      <th className="p-3">継続商談数</th>
+                      <th className="p-3">受注数</th>
+                      <th className="p-3">受注金額</th>
+                      <th className="p-3">受注単価</th>
+                      <th className="p-3">受注率</th>
+                   </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                   {advisorData.map((d, i) => {
+                      const unitPrice = d.won > 0 ? Math.round(d.revenue / d.won) : 0;
+                      const winRate = d.referrals > 0 ? ((d.won / d.referrals) * 100).toFixed(1) : 0;
+                      return (
+                         <tr key={i} className="hover:bg-slate-50">
+                            <td className="p-3 text-left font-bold">{d.source}</td>
+                            <td className="p-3">¥{d.cost.toLocaleString()}</td>
+                            <td className="p-3">{d.referrals}</td>
+                            <td className="p-3 text-rose-500">{d.lost}</td>
+                            <td className="p-3 text-amber-500">{d.ongoing}</td>
+                            <td className="p-3 font-bold text-emerald-600">{d.won}</td>
+                            <td className="p-3 font-bold">¥{d.revenue.toLocaleString()}</td>
+                            <td className="p-3">¥{unitPrice.toLocaleString()}</td>
+                            <td className="p-3 font-bold">{winRate}%</td>
+                         </tr>
+                      );
+                   })}
+                </tbody>
+             </table>
+          </div>
+
+          <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+             <List size={20} className="text-indigo-600" />
+             顧問経由商談一覧
+          </h3>
+          <div className="overflow-x-auto">
+             <table className="w-full text-sm text-left whitespace-nowrap">
+                <thead className="bg-slate-50 text-slate-700 border-b-2 border-slate-200">
+                   <tr>
+                      <th className="p-3">企業名</th>
+                      <th className="p-3">セグメント</th>
+                      <th className="p-3">面談相手</th>
+                      <th className="p-3">ステータス</th>
+                      <th className="p-3">商談メモ</th>
+                   </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                   {advisorDealList.map((deal, i) => (
+                      <tr key={i} className="hover:bg-slate-50">
+                         <td className="p-3 font-bold">{deal.company}</td>
+                         <td className="p-3"><span className="px-2 py-0.5 bg-slate-100 rounded text-xs">{deal.segment}</span></td>
+                         <td className="p-3">{deal.person}</td>
+                         <td className="p-3"><span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-xs font-bold">{deal.status}</span></td>
+                         <td className="p-3 text-xs text-slate-500">{deal.memo}</td>
+                      </tr>
+                   ))}
+                </tbody>
+             </table>
+          </div>
+       </div>
     </div>
   );
 };
 
 // --- Process Analysis Tab ---
 const ProcessAnalysisTab = () => {
-  const fy26EntFunnelData = [{ value: 2500, name: 'リード獲得', fill: '#4f46e5' }, { value: 500, name: '商談化', fill: '#6366f1' }, { value: 250, name: '提案', fill: '#818cf8' }, { value: 50, name: '受注', fill: '#a5b4fc' }];
-  const campaignLeadData = [{ name: '[EV] HR Momentum', ent: 99, mid: 46, sml: 72, unk: 22 }, { name: '未入力', ent: 84, mid: 34, sml: 37, unk: 24 }];
-  const sourceData = [{ source: 'Web (Inbound)', leads: 2500, opps: 400, orders: 80, cost: 5000000, revenue: 12000000 }, { source: 'Event', leads: 1200, opps: 150, orders: 30, cost: 8000000, revenue: 6000000 }];
-  const currentStockData = { leads: 3450, activeOpps: 420, activeTrials: 115 };
-  const segmentFunnelData = [{ stage: 'リード獲得', Ent: 200, Mid: 400, Small: 600 }, { stage: '商談化', Ent: 80, Mid: 150, Small: 220 }];
+  const segmentFunnelData = [
+    { stage: 'リード獲得', Ent: 200, Mid: 400, Small: 600 },
+    { stage: '商談化', Ent: 80, Mid: 150, Small: 220 },
+    { stage: '提案', Ent: 40, Mid: 70, Small: 90 },
+    { stage: '受注', Ent: 15, Mid: 25, Small: 45 },
+  ];
+
+  // FY26 Cumulative Funnel Data (Enterprise)
+  const fy26EntFunnelData = [
+    { value: 2500, name: 'リード獲得', fill: '#4f46e5' },
+    { value: 500, name: '商談化', fill: '#6366f1' },
+    { value: 250, name: '提案', fill: '#818cf8' },
+    { value: 50, name: '受注', fill: '#a5b4fc' },
+  ];
+
+  const currentStockData = {
+    leads: 3450,
+    activeOpps: 420,
+    activeTrials: 115
+  };
+
+  const campaignLeadData = [
+    { name: '[EV] HR Momentum_20251204', ent: 99, mid: 46, sml: 72, unk: 22 },
+    { name: '[EV] 251203_ SBI Innovation Conference', ent: 0, mid: 0, sml: 0, unk: 8 },
+    { name: '[OG] Website Tracking (sbbiz.jp)', ent: 2, mid: 2, sml: 1, unk: 0 },
+    { name: '[OG] 法人向け | お問い合わせ (Web経由)', ent: 0, mid: 0, sml: 3, unk: 0 },
+    { name: '[OG] 法人向け | サービス紹介資料DL (Web経由)', ent: 0, mid: 0, sml: 6, unk: 0 },
+    { name: '未入力', ent: 84, mid: 34, sml: 37, unk: 24 },
+  ];
+
+  const sourceData = [
+    { source: 'Web (Inbound)', leads: 2500, opps: 400, orders: 80, cost: 5000000, revenue: 12000000 },
+    { source: 'Event / Seminar', leads: 1200, opps: 150, orders: 30, cost: 8000000, revenue: 6000000 },
+    { source: 'Outbound (SDR)', leads: 800, opps: 120, orders: 20, cost: 4000000, revenue: 5000000 },
+    { source: 'Referral / Partner', leads: 300, opps: 80, orders: 40, cost: 500000, revenue: 8000000 },
+  ];
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><Info size={20} className="text-indigo-600" />プロセス分析コメント</h3><div className="bg-slate-50 p-4 h-24 overflow-y-auto text-sm">コメント...</div></div>
-       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6"><div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><Filter size={20} className="text-indigo-600" />当月セグメント別 ファネル</h3><div className="h-64 w-full"><ResponsiveContainer width="100%" height="100%"><BarChart data={[{stage:'リード',Ent:200,Mid:400,Small:600}]} layout="vertical"><CartesianGrid strokeDasharray="3 3" /><XAxis type="number" /><YAxis dataKey="stage" type="category" /><Tooltip /><Legend /><Bar dataKey="Ent" stackId="a" fill="#1e5fa0" /><Bar dataKey="Mid" stackId="a" fill="#3b82f6" /><Bar dataKey="Small" stackId="a" fill="#f59e0b" /></BarChart></ResponsiveContainer></div></div><div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><Filter size={20} className="text-indigo-600" />FY26累計ファネル</h3><div className="h-64 w-full"><ResponsiveContainer width="100%" height="100%"><FunnelChart><Tooltip /><Funnel dataKey="value" data={fy26EntFunnelData} isAnimationActive><LabelList position="center" fill="#fff" stroke="none" dataKey="value" /></Funnel></FunnelChart></ResponsiveContainer><div className="mt-4 grid grid-cols-4 gap-2 text-center text-xs">{fy26EntFunnelData.map((d,i)=>(<div key={i} className="p-2 bg-slate-50 rounded"><div className="font-bold">{d.name}</div><div>{d.value}件</div></div>))}</div></div></div>
        
-       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><DollarSign size={20} className="text-amber-500" />ソース別 獲得分析 & CPA</h3><div className="overflow-x-auto"><table className="w-full text-sm text-right"><thead className="bg-amber-50"><tr><th className="p-3 text-left">ソース</th><th>リード</th><th>商談</th><th>CPL</th><th>CPO</th><th>受注単価</th></tr></thead><tbody>{sourceData.map((s,i)=>(<tr key={i}><td className="p-3 text-left font-bold">{s.source}</td><td>{s.leads}</td><td>{s.opps}</td><td>¥{Math.round(s.cost/s.leads).toLocaleString()}</td><td>¥{Math.round(s.cost/s.opps).toLocaleString()}</td><td>¥{Math.round(s.revenue/s.orders).toLocaleString()}</td></tr>))}</tbody></table></div></div>
-       
-       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><Megaphone size={20} className="text-rose-500" />キャンペーン別 獲得分析</h3><div className="overflow-x-auto"><table className="w-full text-sm text-right"><thead className="bg-slate-50"><tr><th className="p-2 text-left">CP名</th><th>Ent</th><th>Mid</th><th>Sml</th><th>計</th></tr></thead><tbody>{campaignLeadData.map((c,i)=>(<tr key={i}><td className="p-2 text-left">{c.name}</td><td>{c.ent}</td><td>{c.mid}</td><td>{c.sml}</td><td>{c.ent+c.mid+c.sml+c.unk}</td></tr>))}</tbody></table></div></div>
+       {/* 1. Comment Section */}
+       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+             <Info size={20} className="text-indigo-600" />
+             プロセス・要因分析コメント
+          </h3>
+          <div className="bg-slate-50 p-4 rounded-lg h-24 overflow-y-auto text-sm text-slate-700 leading-relaxed">
+             コメントをここに入力...
+          </div>
+       </div>
+
+       {/* 2. Funnel Analysis */}
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+             <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+               <Filter size={20} className="text-indigo-600" />
+               当月セグメント別 ファネル (積上)
+             </h3>
+             <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                   <BarChart data={segmentFunnelData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                      <XAxis type="number" />
+                      <YAxis dataKey="stage" type="category" width={80} tick={{fontSize: 12}} />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="Ent" stackId="a" fill="#1e5fa0" />
+                      <Bar dataKey="Mid" stackId="a" fill="#3b82f6" />
+                      <Bar dataKey="Small" stackId="a" fill="#f59e0b" />
+                   </BarChart>
+                </ResponsiveContainer>
+             </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+             <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+               <Filter size={20} className="text-indigo-600" />
+               FY26累計ファネル (Enterprise)
+             </h3>
+             <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                   <FunnelChart>
+                      <Tooltip />
+                      <Funnel
+                        dataKey="value"
+                        data={fy26EntFunnelData}
+                        isAnimationActive
+                      >
+                        <LabelList position="right" fill="#000" stroke="none" dataKey="name" />
+                      </Funnel>
+                   </FunnelChart>
+                </ResponsiveContainer>
+                {/* 補足データ（件数・転換率） */}
+                <div className="mt-4 grid grid-cols-4 gap-2 text-center text-xs">
+                    <div className="p-2 bg-slate-50 rounded">
+                        <div className="font-bold text-slate-700">リード</div>
+                        <div>2,500件</div>
+                        <div className="text-indigo-600 font-bold">-</div>
+                    </div>
+                    <div className="p-2 bg-slate-50 rounded">
+                        <div className="font-bold text-slate-700">商談化</div>
+                        <div>500件</div>
+                        <div className="text-indigo-600 font-bold">20.0%</div>
+                    </div>
+                    <div className="p-2 bg-slate-50 rounded">
+                        <div className="font-bold text-slate-700">提案</div>
+                        <div>250件</div>
+                        <div className="text-indigo-600 font-bold">50.0%</div>
+                    </div>
+                    <div className="p-2 bg-slate-50 rounded">
+                        <div className="font-bold text-slate-700">受注</div>
+                        <div>50件</div>
+                        <div className="text-indigo-600 font-bold">20.0%</div>
+                    </div>
+                </div>
+             </div>
+          </div>
+       </div>
+
+       {/* 3. Current Stock KPI */}
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+             <div>
+                <p className="text-sm text-slate-500 font-bold mb-1">現在の合計リード数 (Stock)</p>
+                <p className="text-3xl font-extrabold text-indigo-600">{currentStockData.leads.toLocaleString()}</p>
+             </div>
+             <div className="p-3 bg-indigo-50 rounded-full text-indigo-600"><Users size={24} /></div>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+             <div>
+                <p className="text-sm text-slate-500 font-bold mb-1">現在稼働している商談数</p>
+                <p className="text-3xl font-extrabold text-emerald-600">{currentStockData.activeOpps.toLocaleString()}</p>
+             </div>
+             <div className="p-3 bg-emerald-50 rounded-full text-emerald-600"><Briefcase size={24} /></div>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+             <div>
+                <p className="text-sm text-slate-500 font-bold mb-1">現在稼働しているトライアル数</p>
+                <p className="text-3xl font-extrabold text-amber-500">{currentStockData.activeTrials.toLocaleString()}</p>
+             </div>
+             <div className="p-3 bg-amber-50 rounded-full text-amber-500"><CheckCircle size={24} /></div>
+          </div>
+       </div>
+
+       {/* 4. Source Analysis (Modified with Unit Price) */}
+       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+          <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+             <DollarSign size={20} className="text-amber-500" />
+             ソース別 獲得分析 & CPA
+          </h3>
+          <div className="overflow-x-auto">
+             <table className="w-full text-sm text-right whitespace-nowrap">
+                <thead className="bg-amber-50 text-amber-900 border-b-2 border-amber-200">
+                   <tr>
+                      <th className="p-3 text-left">ソース</th><th className="p-3">獲得リード数</th><th className="p-3">商談化数</th><th className="p-3">商談化率</th><th className="p-3">総コスト (概算)</th><th className="p-3">CPL (リード単価)</th><th className="p-3">CPO (商談単価)</th><th className="p-3 border-l-2 border-amber-200">受注単価 (平均)</th>
+                   </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                   {sourceData.map((s, i) => (
+                      <tr key={i} className="hover:bg-slate-50">
+                         <td className="p-3 text-left font-bold">{s.source}</td>
+                         <td className="p-3">{s.leads.toLocaleString()}</td>
+                         <td className="p-3">{s.opps.toLocaleString()}</td>
+                         <td className="p-3 font-bold text-indigo-600">{((s.opps/s.leads)*100).toFixed(1)}%</td>
+                         <td className="p-3">¥{s.cost.toLocaleString()}</td>
+                         <td className="p-3">¥{Math.round(s.cost/s.leads).toLocaleString()}</td>
+                         <td className="p-3">¥{Math.round(s.cost/s.opps).toLocaleString()}</td>
+                         <td className="p-3 border-l border-slate-100 font-bold text-slate-700">¥{Math.round(s.revenue/s.orders).toLocaleString()}</td>
+                      </tr>
+                   ))}
+                </tbody>
+             </table>
+          </div>
+       </div>
+
+       {/* 5. Campaign Analysis (Leads Only) */}
+       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+          <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+             <Megaphone size={20} className="text-rose-500" />
+             キャンペーン別 獲得リード数
+          </h3>
+          <div className="overflow-x-auto">
+             <table className="w-full text-sm text-right whitespace-nowrap">
+                <thead className="bg-slate-50 text-slate-700 border-b-2 border-slate-400">
+                   <tr>
+                      <th className="p-2 text-left">キャンペーン名</th><th className="p-2">Enterprise</th><th className="p-2">Mid</th><th className="p-2">Small</th><th className="p-2">未入力</th><th className="p-2">総計</th>
+                   </tr>
+                </thead>
+                <tbody>
+                   {campaignLeadData.map((c, i) => {
+                      const total = c.ent + c.mid + c.sml + c.unk;
+                      return (
+                         <tr key={i} className="hover:bg-slate-50 border-b border-slate-100">
+                            <td className="p-2 text-left">{c.name}</td><td>{c.ent}</td><td>{c.mid}</td><td>{c.sml}</td><td>{c.unk}</td><td className="font-bold">{total}</td>
+                         </tr>
+                      );
+                   })}
+                   <tr className="bg-slate-50 font-bold">
+                      <td className="p-2 text-left">総計</td>
+                      <td>{campaignLeadData.reduce((a,b)=>a+b.ent,0)}</td>
+                      <td>{campaignLeadData.reduce((a,b)=>a+b.mid,0)}</td>
+                      <td>{campaignLeadData.reduce((a,b)=>a+b.sml,0)}</td>
+                      <td>{campaignLeadData.reduce((a,b)=>a+b.unk,0)}</td>
+                      <td>{campaignLeadData.reduce((a,b)=>a+(b.ent+b.mid+b.sml+b.unk),0)}</td>
+                   </tr>
+                </tbody>
+             </table>
+          </div>
+       </div>
+
     </div>
   );
 };
