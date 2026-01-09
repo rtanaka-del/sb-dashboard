@@ -220,229 +220,229 @@ const INITIAL_SETTINGS: AppSettings = {
   overview: { 
     id: '', 
     name: 'サマリー / 予実', 
-    description: '必要なシート: Main (月次予実データ)', 
+    description: 'シート: Main', 
     status: 'idle' 
   },
   sales: { 
     id: '', 
     name: '企業直販売上分', 
-    description: '必要なシート: New (新規KPI), Existing (既存KPI), Lists (案件リスト)', 
+    description: 'シート: New, Existing, Lists', 
     status: 'idle' 
   },
   other: { 
     id: '', 
     name: 'その他売上', 
-    description: '必要なシート: Other (セグメント予実・パートナー構成比)', 
+    description: 'シート: Other', 
     status: 'idle' 
   },
   marketing: { 
     id: '', 
     name: 'マーケ施策・分析', 
-    description: '必要なシート: Marketing (ソース別・キャンペーン別・ファネル)', 
+    description: 'シート: Marketing', 
     status: 'idle' 
   },
   negotiation: { 
     id: '', 
     name: '商談・トライアル分析', 
-    description: '必要なシート: Advisor_CPA (顧問データ), Lists (商談・トライアルリスト)', 
+    description: 'シート: Advisor_CPA, Lists', 
     status: 'idle' 
   },
   pipeline: { 
     id: '', 
     name: 'パイプライン分析', 
-    description: '必要なシート: Pipeline_Agg (集計データ), Lists (詳細リスト)', 
+    description: 'シート: Pipeline_Agg, Lists', 
     status: 'idle' 
   },
   okr: { 
     id: '', 
     name: 'OKR・今後のアクション', 
-    description: '必要なシート: OKR (進捗トラッキング)', 
+    description: 'シート: OKR', 
     status: 'idle' 
   },
 };
 
-// [Mock] Main Data (Expand to assure lines)
+// [Mock] Main Data
 const MOCK_SALES_DATA: SalesRecord[] = [
-  { 
-    month: '4月', 
-    sales_budget: 12000, 
-    sales_target: 13000, 
-    sales_actual: 12500, 
-    sales_forecast: 12500, 
-    cost_budget: 4800, 
-    cost_target: 5200, 
-    cost_actual: 5000, 
-    cost_forecast: 5000, 
-    profit_budget: 7200, 
-    profit_target: 7800, 
-    profit_actual: 7500, 
-    profit_forecast: 7500 
+  {
+    month: '4月',
+    sales_budget: 12000,
+    sales_target: 13000,
+    sales_actual: 12500,
+    sales_forecast: 12500,
+    cost_budget: 4800,
+    cost_target: 5200,
+    cost_actual: 5000,
+    cost_forecast: 5000,
+    profit_budget: 7200,
+    profit_target: 7800,
+    profit_actual: 7500,
+    profit_forecast: 7500
   },
-  { 
-    month: '5月', 
-    sales_budget: 13000, 
-    sales_target: 14000, 
-    sales_actual: 12800, 
-    sales_forecast: 12800, 
-    cost_budget: 5200, 
-    cost_target: 5600, 
-    cost_actual: 5120, 
-    cost_forecast: 5120, 
-    profit_budget: 7800, 
-    profit_target: 8400, 
-    profit_actual: 7680, 
-    profit_forecast: 7680 
+  {
+    month: '5月',
+    sales_budget: 13000,
+    sales_target: 14000,
+    sales_actual: 12800,
+    sales_forecast: 12800,
+    cost_budget: 5200,
+    cost_target: 5600,
+    cost_actual: 5120,
+    cost_forecast: 5120,
+    profit_budget: 7800,
+    profit_target: 8400,
+    profit_actual: 7680,
+    profit_forecast: 7680
   },
-  { 
-    month: '6月', 
-    sales_budget: 14000, 
-    sales_target: 15000, 
-    sales_actual: 14500, 
-    sales_forecast: 14500, 
-    cost_budget: 5600, 
-    cost_target: 6000, 
-    cost_actual: 5800, 
-    cost_forecast: 5800, 
-    profit_budget: 8400, 
-    profit_target: 9000, 
-    profit_actual: 8700, 
-    profit_forecast: 8700 
+  {
+    month: '6月',
+    sales_budget: 14000,
+    sales_target: 15000,
+    sales_actual: 14500,
+    sales_forecast: 14500,
+    cost_budget: 5600,
+    cost_target: 6000,
+    cost_actual: 5800,
+    cost_forecast: 5800,
+    profit_budget: 8400,
+    profit_target: 9000,
+    profit_actual: 8700,
+    profit_forecast: 8700
   },
-  { 
-    month: '7月', 
-    sales_budget: 15000, 
-    sales_target: 16000, 
-    sales_actual: 16000, 
-    sales_forecast: 16000, 
-    cost_budget: 6000, 
-    cost_target: 6400, 
-    cost_actual: 6400, 
-    cost_forecast: 6400, 
-    profit_budget: 9000, 
-    profit_target: 9600, 
-    profit_actual: 9600, 
-    profit_forecast: 9600 
+  {
+    month: '7月',
+    sales_budget: 15000,
+    sales_target: 16000,
+    sales_actual: 16000,
+    sales_forecast: 16000,
+    cost_budget: 6000,
+    cost_target: 6400,
+    cost_actual: 6400,
+    cost_forecast: 6400,
+    profit_budget: 9000,
+    profit_target: 9600,
+    profit_actual: 9600,
+    profit_forecast: 9600
   },
-  { 
-    month: '8月', 
-    sales_budget: 16000, 
-    sales_target: 17000, 
-    sales_actual: 15800, 
-    sales_forecast: 15800, 
-    cost_budget: 6400, 
-    cost_target: 6800, 
-    cost_actual: 6320, 
-    cost_forecast: 6320, 
-    profit_budget: 9600, 
-    profit_target: 10200, 
-    profit_actual: 9480, 
-    profit_forecast: 9480 
+  {
+    month: '8月',
+    sales_budget: 16000,
+    sales_target: 17000,
+    sales_actual: 15800,
+    sales_forecast: 15800,
+    cost_budget: 6400,
+    cost_target: 6800,
+    cost_actual: 6320,
+    cost_forecast: 6320,
+    profit_budget: 9600,
+    profit_target: 10200,
+    profit_actual: 9480,
+    profit_forecast: 9480
   },
-  { 
-    month: '9月', 
-    sales_budget: 17000, 
-    sales_target: 18000, 
-    sales_actual: 18200, 
-    sales_forecast: 18200, 
-    cost_budget: 6800, 
-    cost_target: 7200, 
-    cost_actual: 6916, 
-    cost_forecast: 6916, 
-    profit_budget: 10200, 
-    profit_target: 10800, 
-    profit_actual: 11284, 
-    profit_forecast: 11284 
+  {
+    month: '9月',
+    sales_budget: 17000,
+    sales_target: 18000,
+    sales_actual: 18200,
+    sales_forecast: 18200,
+    cost_budget: 6800,
+    cost_target: 7200,
+    cost_actual: 6916,
+    cost_forecast: 6916,
+    profit_budget: 10200,
+    profit_target: 10800,
+    profit_actual: 11284,
+    profit_forecast: 11284
   },
-  { 
-    month: '10月', 
-    sales_budget: 18000, 
-    sales_target: 19500, 
-    sales_actual: null, 
-    sales_forecast: 19000, 
-    cost_budget: 7200, 
-    cost_target: 7800, 
-    cost_actual: null, 
-    cost_forecast: 7600, 
-    profit_budget: 10800, 
-    profit_target: 11700, 
-    profit_actual: null, 
-    profit_forecast: 11400 
+  {
+    month: '10月',
+    sales_budget: 18000,
+    sales_target: 19500,
+    sales_actual: null,
+    sales_forecast: 19000,
+    cost_budget: 7200,
+    cost_target: 7800,
+    cost_actual: null,
+    cost_forecast: 7600,
+    profit_budget: 10800,
+    profit_target: 11700,
+    profit_actual: null,
+    profit_forecast: 11400
   },
-  { 
-    month: '11月', 
-    sales_budget: 19000, 
-    sales_target: 20500, 
-    sales_actual: null, 
-    sales_forecast: 19500, 
-    cost_budget: 7600, 
-    cost_target: 8200, 
-    cost_actual: null, 
-    cost_forecast: 7800, 
-    profit_budget: 11400, 
-    profit_target: 12300, 
-    profit_actual: null, 
-    profit_forecast: 11700 
+  {
+    month: '11月',
+    sales_budget: 19000,
+    sales_target: 20500,
+    sales_actual: null,
+    sales_forecast: 19500,
+    cost_budget: 7600,
+    cost_target: 8200,
+    cost_actual: null,
+    cost_forecast: 7800,
+    profit_budget: 11400,
+    profit_target: 12300,
+    profit_actual: null,
+    profit_forecast: 11700
   },
-  { 
-    month: '12月', 
-    sales_budget: 20000, 
-    sales_target: 21500, 
-    sales_actual: null, 
-    sales_forecast: 21000, 
-    cost_budget: 8000, 
-    cost_target: 8600, 
-    cost_actual: null, 
-    cost_forecast: 8400, 
-    profit_budget: 12000, 
-    profit_target: 12900, 
-    profit_actual: null, 
-    profit_forecast: 12600 
+  {
+    month: '12月',
+    sales_budget: 20000,
+    sales_target: 21500,
+    sales_actual: null,
+    sales_forecast: 21000,
+    cost_budget: 8000,
+    cost_target: 8600,
+    cost_actual: null,
+    cost_forecast: 8400,
+    profit_budget: 12000,
+    profit_target: 12900,
+    profit_actual: null,
+    profit_forecast: 12600
   },
-  { 
-    month: '1月', 
-    sales_budget: 21000, 
-    sales_target: 22500, 
-    sales_actual: null, 
-    sales_forecast: 22000, 
-    cost_budget: 8400, 
-    cost_target: 9000, 
-    cost_actual: null, 
-    cost_forecast: 8800, 
-    profit_budget: 12600, 
-    profit_target: 13500, 
-    profit_actual: null, 
-    profit_forecast: 13200 
+  {
+    month: '1月',
+    sales_budget: 21000,
+    sales_target: 22500,
+    sales_actual: null,
+    sales_forecast: 22000,
+    cost_budget: 8400,
+    cost_target: 9000,
+    cost_actual: null,
+    cost_forecast: 8800,
+    profit_budget: 12600,
+    profit_target: 13500,
+    profit_actual: null,
+    profit_forecast: 13200
   },
-  { 
-    month: '2月', 
-    sales_budget: 22000, 
-    sales_target: 23500, 
-    sales_actual: null, 
-    sales_forecast: 22500, 
-    cost_budget: 8800, 
-    cost_target: 9400, 
-    cost_actual: null, 
-    cost_forecast: 9000, 
-    profit_budget: 13200, 
-    profit_target: 14100, 
-    profit_actual: null, 
-    profit_forecast: 13500 
+  {
+    month: '2月',
+    sales_budget: 22000,
+    sales_target: 23500,
+    sales_actual: null,
+    sales_forecast: 22500,
+    cost_budget: 8800,
+    cost_target: 9400,
+    cost_actual: null,
+    cost_forecast: 9000,
+    profit_budget: 13200,
+    profit_target: 14100,
+    profit_actual: null,
+    profit_forecast: 13500
   },
-  { 
-    month: '3月', 
-    sales_budget: 23000, 
-    sales_target: 25000, 
-    sales_actual: null, 
-    sales_forecast: 24000, 
-    cost_budget: 9200, 
-    cost_target: 10000, 
-    cost_actual: null, 
-    cost_forecast: 9600, 
-    profit_budget: 13800, 
-    profit_target: 15000, 
-    profit_actual: null, 
-    profit_forecast: 14400 
-  },
+  {
+    month: '3月',
+    sales_budget: 23000,
+    sales_target: 25000,
+    sales_actual: null,
+    sales_forecast: 24000,
+    cost_budget: 9200,
+    cost_target: 10000,
+    cost_actual: null,
+    cost_forecast: 9600,
+    profit_budget: 13800,
+    profit_target: 15000,
+    profit_actual: null,
+    profit_forecast: 14400
+  }
 ];
 
 // [Mock] New Sales KPI
@@ -485,7 +485,7 @@ const MOCK_NEW_DATA: NewSalesRecord[] = [
     unit_price: 60, 
     id_price: 1200, 
     duration: 12 
-  },
+  }
 ];
 
 // [Mock] Existing Sales KPI
@@ -510,7 +510,7 @@ const MOCK_EXISTING_DATA: ExistingSalesRecord[] = [
     nrr: 83.6, 
     renewal: 100.0, 
     id_growth: 92.0 
-  },
+  }
 ];
 
 // [Mock] List Data
@@ -639,42 +639,87 @@ const MOCK_LIST_DATA: ListRecord[] = [
 
 // [Mock] OKR Data
 const MOCK_OKR_DATA: OkrRecord[] = [
-  { key_result: "635件", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
-  { key_result: "160件", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
-  { key_result: "6社/150%", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
-  { key_result: "30%削減", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
-  { key_result: "オンボーディング標準化", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
-  { key_result: "3KPI/10%改善", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
-  { key_result: "競合調査", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
-  { key_result: "勝率80%", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
-  { key_result: "サイト改修/10件", jan: "", feb: "", mar: "", apr: "", may: "", jun: "" },
+  { 
+    key_result: "635件", 
+    jan: "", feb: "", mar: "", apr: "", may: "", jun: "" 
+  },
+  { 
+    key_result: "160件", 
+    jan: "", feb: "", mar: "", apr: "", may: "", jun: "" 
+  },
+  { 
+    key_result: "6社/150%", 
+    jan: "", feb: "", mar: "", apr: "", may: "", jun: "" 
+  },
 ];
 
 // [Mock] Marketing Data
 const MOCK_MARKETING_DATA: MarketingRecord[] = [
-  { type: 'Source', label: 'Web (Inbound)', val1: 2500, val2: 400, val3: 80, val4: 5000000, val5: 0 },
-  { type: 'Source', label: 'Event', val1: 1200, val2: 150, val3: 30, val4: 8000000, val5: 0 },
-  { type: 'Campaign', label: '[EV] HR Momentum', val1: 99, val2: 46, val3: 72, val4: 0, val5: 0 },
-  { type: 'Funnel_Month', label: 'リード獲得', val1: 200, val2: 400, val3: 600, val4: 0, val5: 0 },
-  { type: 'Funnel_Month', label: '商談化', val1: 80, val2: 150, val3: 220, val4: 0, val5: 0 },
+  { 
+    type: 'Source', 
+    label: 'Web (Inbound)', 
+    val1: 2500, val2: 400, val3: 80, val4: 5000000, val5: 0 
+  },
+  { 
+    type: 'Source', 
+    label: 'Event', 
+    val1: 1200, val2: 150, val3: 30, val4: 8000000, val5: 0 
+  },
+  { 
+    type: 'Campaign', 
+    label: '[EV] HR Momentum', 
+    val1: 99, val2: 46, val3: 72, val4: 0, val5: 0 
+  },
+  { 
+    type: 'Funnel_Month', 
+    label: 'リード獲得', 
+    val1: 200, val2: 400, val3: 600, val4: 0, val5: 0 
+  },
+  { 
+    type: 'Funnel_Month', 
+    label: '商談化', 
+    val1: 80, val2: 150, val3: 220, val4: 0, val5: 0 
+  },
 ];
 
 // [Mock] Pipeline Data
 const MOCK_PIPELINE_DATA: PipelineRecord[] = [
-  { type: 'Amount', segment: 'Enterprise', m1: 16289417, m2: 11874840, m3: 11849760, m4: 50826379, m5: 10098414, m6: 18688880 },
-  { type: 'Amount', segment: 'Mid', m1: 15735600, m2: 8430892, m3: 3949990, m4: 16900000, m5: 1621000, m6: 1924000 },
+  { 
+    type: 'Amount', 
+    segment: 'Enterprise', 
+    m1: 16289417, m2: 11874840, m3: 11849760, m4: 50826379, m5: 10098414, m6: 18688880 
+  },
+  { 
+    type: 'Amount', 
+    segment: 'Mid', 
+    m1: 15735600, m2: 8430892, m3: 3949990, m4: 16900000, m5: 1621000, m6: 1924000 
+  },
 ];
 
 // [Mock] Other Data
 const MOCK_OTHER_DATA: OtherRecord[] = [
-  { type: 'Segment', name: '企業代理店', val1: 1000, val2: 0, val3: 1100 },
-  { type: 'Partner', name: 'Partner A', val1: 1200, val2: 0, val3: 0 },
+  { 
+    type: 'Segment', 
+    name: '企業代理店', 
+    val1: 1000, val2: 0, val3: 1100 
+  },
+  { 
+    type: 'Partner', 
+    name: 'Partner A', 
+    val1: 1200, val2: 0, val3: 0 
+  },
 ];
 
 // [Mock] Advisor Data
 const MOCK_ADVISOR_DATA: AdvisorRecord[] = [
-  { source: 'Advisor A', cost: 500000, referrals: 10, lost: 4, ongoing: 4, won: 2, revenue: 3000000 },
-  { source: 'Advisor B', cost: 300000, referrals: 5, lost: 2, ongoing: 2, won: 1, revenue: 1500000 },
+  { 
+    source: 'Advisor A', 
+    cost: 500000, referrals: 10, lost: 4, ongoing: 4, won: 2, revenue: 3000000 
+  },
+  { 
+    source: 'Advisor B', 
+    cost: 300000, referrals: 5, lost: 2, ongoing: 2, won: 1, revenue: 1500000 
+  },
 ];
 
 // ==========================================
@@ -782,9 +827,21 @@ const SegmentCard = ({
         </p>
       </div>
       <div className="flex justify-between w-full px-1">
-        <CircularRate label="NRR" value={Number(data?.nrr || 0)} color="#10b981" />
-        <CircularRate label="更新率" value={Number(data?.renewal || 0)} color="#3b82f6" />
-        <CircularRate label="ID増減" value={Number(data?.id_growth || 0)} color="#f59e0b" />
+        <CircularRate 
+          label="NRR" 
+          value={Number(data?.nrr || 0)} 
+          color="#10b981" 
+        />
+        <CircularRate 
+          label="更新率" 
+          value={Number(data?.renewal || 0)} 
+          color="#3b82f6" 
+        />
+        <CircularRate 
+          label="ID増減" 
+          value={Number(data?.id_growth || 0)} 
+          color="#f59e0b" 
+        />
       </div>
     </div>
   </div>
@@ -892,7 +949,11 @@ const AchievementBadge = ({ label, value }: { label: string, value: number }) =>
   const bgColor = isTarget ? (value >= 100 ? 'bg-amber-100' : 'bg-white') : (value >= 100 ? 'bg-emerald-100' : 'bg-rose-100');
   const textColor = isTarget ? (value >= 100 ? 'text-amber-700' : 'text-slate-500') : (value >= 100 ? 'text-emerald-700' : 'text-rose-700');
   const borderColor = isTarget ? (value >= 100 ? 'border-amber-200' : 'border-slate-200') : (value >= 100 ? 'border-emerald-200' : 'border-rose-200');
-  return (<span className={`px-2 py-0.5 rounded-full font-bold border ${bgColor} ${textColor} ${borderColor} text-[10px]`}>{label} {formatPercent(value)}</span>);
+  return (
+    <span className={`px-2 py-0.5 rounded-full font-bold border ${bgColor} ${textColor} ${borderColor} text-[10px]`}>
+      {label} {formatPercent(value)}
+    </span>
+  );
 };
 
 
@@ -1074,7 +1135,9 @@ export default function CBDashboard() {
           fetchSheetData={fetchSheetData} 
         />;
       case 'overview': 
-        return <OverviewTab data={salesData} />;
+        return <OverviewTab 
+          data={salesData} 
+        />;
       case 'sales': 
         return <SalesAnalysisTab 
           newData={newSalesData} 
@@ -1082,9 +1145,13 @@ export default function CBDashboard() {
           listData={salesListData} 
         />;
       case 'other': 
-        return <OtherSalesTab otherData={otherData} />;
+        return <OtherSalesTab 
+          otherData={otherData} 
+        />;
       case 'marketing': 
-        return <MarketingAnalysisTab mktData={marketingData} />;
+        return <MarketingAnalysisTab 
+          mktData={marketingData} 
+        />;
       case 'negotiation': 
         return <NegotiationAnalysisTab 
           advisorData={advisorData} 
@@ -1096,7 +1163,9 @@ export default function CBDashboard() {
           listData={pipeListData} 
         />;
       case 'okr': 
-        return <OkrActionTab okrData={okrData} />;
+        return <OkrActionTab 
+          okrData={okrData} 
+        />;
       default: 
         return <OverviewTab data={salesData} />;
     }
@@ -1111,7 +1180,7 @@ export default function CBDashboard() {
              <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">SB</div>
              <span>CB Div.</span>
            </div>
-           <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード</p>
+           <p className="text-xs text-slate-400 mt-2">経営管理ダッシュボード v24.12.35</p>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
@@ -1176,7 +1245,7 @@ export default function CBDashboard() {
           />
         </nav>
 
-        {/* Global Sync Button Area */}
+        {/* Global Sync Button Area (Optional but kept for compatibility) */}
         <div className="p-4 border-t border-slate-700 bg-slate-800/50">
           <div className="bg-slate-800 rounded-lg p-4 shadow-inner border border-slate-700 space-y-4">
             <div>
@@ -1237,8 +1306,8 @@ export default function CBDashboard() {
           </h1>
           <div className="flex items-center gap-4">
              <div className="text-right hidden md:block">
-                <p className="text-sm font-medium">山田 太郎</p>
-                <p className="text-xs text-slate-500">法人事業部長</p>
+               <p className="text-sm font-medium">山田 太郎</p>
+               <p className="text-xs text-slate-500">法人事業部長</p>
              </div>
              <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold border border-indigo-100">
                YT
@@ -1708,6 +1777,7 @@ const NegotiationAnalysisTab = ({ advisorData, listData }: { advisorData: Adviso
    const safeListData = Array.isArray(listData) ? listData : [];
    const advisorDeals = safeListData.filter(d => d.category === 'AdvisorDeal');
    const trialDeals = safeListData.filter(d => d.category === 'Trial');
+   const safeAdvisorData = Array.isArray(advisorData) ? advisorData : [];
    
    const [url, setUrl] = useState('');
    
@@ -1721,9 +1791,6 @@ const NegotiationAnalysisTab = ({ advisorData, listData }: { advisorData: Adviso
        setUrl(v); 
        localStorage.setItem('neg_url', v); 
    };
-
-   // 安全なデータ参照
-   const safeAdvisorData = Array.isArray(advisorData) ? advisorData : [];
 
    return (
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
